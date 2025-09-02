@@ -1,0 +1,75 @@
+{
+  "settings": {
+    "siteName": "Building Web Project",
+    "siteDescription": "A modern web application with JSON database",
+    "version": "1.0.0",
+    "lastUpdated": "2024-01-01"
+  },
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "role": "admin",
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "registeredUsers": [],
+  "content": {
+    "pages": [
+      {
+        "id": "home",
+        "title": "Home",
+        "content": "Welcome to our modern web application!",
+        "active": true
+      },
+      {
+        "id": "about",
+        "title": "About",
+        "content": "Learn more about our project and mission.",
+        "active": true
+      },
+      {
+        "id": "contact",
+        "title": "Contact",
+        "content": "Get in touch with us.",
+        "active": true
+      }
+    ],
+    "posts": [
+      {
+        "id": 1,
+        "title": "Getting Started",
+        "content": "This is our first blog post about getting started with the project.",
+        "author": "admin",
+        "createdAt": "2024-01-01T00:00:00Z",
+        "tags": ["getting-started", "tutorial"]
+      }
+    ]
+  },
+  "forms": {
+    "contact": {
+      "fields": [
+        {
+          "name": "name",
+          "label": "Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "email",
+          "required": true
+        },
+        {
+          "name": "message",
+          "label": "Message",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    }
+  }
+}
