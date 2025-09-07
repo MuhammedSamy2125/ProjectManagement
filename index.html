@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A modern web application with JSON database">
-    <meta name="keywords" content="web application, JSON, modern, responsive">
-    <meta name="author" content="Building Web Project">
+    <meta name="description" content="تطبيق ويب حديث مع قاعدة بيانات JSON - Building Web Project">
+    <meta name="keywords" content="تطبيق ويب, JSON, حديث, متجاوب, السعودية, web application, JSON, modern, responsive, Saudi Arabia">
+    <meta name="author" content="Building Web Project - مشروع بناء الويب">
     
-    <title>Building Web Project</title>
+    <title data-translate="site.title">مشروع بناء الويب - Building Web Project</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="Images/favicon.ico">
@@ -20,6 +20,11 @@
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts for Arabic support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;200;300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
@@ -27,34 +32,42 @@
         <nav class="navbar">
             <div class="nav-container">
                 <div class="nav-brand">
-                    <h1 class="site-title">Building Web</h1>
+                    <h1 class="site-title" data-translate="site.title">مشروع بناء الويب</h1>
+                </div>
+                
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button id="lang-switcher" class="lang-btn" onclick="toggleLanguage()">
+                        <i class="fas fa-globe"></i>
+                        <span id="current-lang" data-translate="site.currentLanguage">العربية</span>
+                    </button>
                 </div>
                 
                 <div class="nav-menu" id="nav-menu">
                     <ul class="nav-list">
                         <li class="nav-item">
                             <a href="#home" class="nav-link active" data-page="home">
-                                <i class="fas fa-home"></i> Home
+                                <i class="fas fa-home"></i> <span class="nav-text">الرئيسية</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="#about" class="nav-link" data-page="about">
-                                <i class="fas fa-info-circle"></i> About
+                                <i class="fas fa-info-circle"></i> <span class="nav-text">حول</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="#blog" class="nav-link" data-page="blog">
-                                <i class="fas fa-blog"></i> Blog
+                                <i class="fas fa-blog"></i> <span class="nav-text">المدونة</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="#contact" class="nav-link" data-page="contact">
-                                <i class="fas fa-envelope"></i> Contact
+                                <i class="fas fa-envelope"></i> <span class="nav-text">اتصل بنا</span>
                             </a>
                         </li>
                         <li class="nav-item" id="auth-nav-item">
                             <a href="#login" class="nav-link" data-page="login">
-                                <i class="fas fa-sign-in-alt"></i> Login
+                                <i class="fas fa-sign-in-alt"></i> <span class="nav-text">تسجيل الدخول</span>
                             </a>
                         </li>
                         <li class="nav-item" id="user-nav-profile" style="display: none;">
@@ -64,7 +77,7 @@
                                     <div id="nav-default-photo" class="nav-user-photo-default">
                                         <i class="fas fa-user"></i>
                                     </div>
-                                    <span id="nav-username" class="nav-username">User</span>
+                                    <span id="nav-username" class="nav-username" data-translate="forms.username">User</span>
                                     <i class="fas fa-chevron-down nav-dropdown-arrow"></i>
                                 </div>
                                 <div class="nav-user-dropdown" id="user-dropdown-menu" style="display: none;">
@@ -77,8 +90,8 @@
                                                 </div>
                                             </div>
                                             <div class="nav-dropdown-details">
-                                                <div id="nav-dropdown-username" class="nav-dropdown-name">User</div>
-                                                <div id="nav-dropdown-role" class="nav-dropdown-role">Role</div>
+                                                <div id="nav-dropdown-username" class="nav-dropdown-name" data-translate="forms.username">User</div>
+                                                <div id="nav-dropdown-role" class="nav-dropdown-role" data-translate="forms.role">Role</div>
                                             </div>
                                         </div>
                                     </div>
@@ -86,16 +99,16 @@
                                     <div class="nav-dropdown-actions">
                                         <a href="#" class="nav-dropdown-item" onclick="goToDashboard()">
                                             <i class="fas fa-tachometer-alt"></i>
-                                            <span>Dashboard</span>
+                                            <span class="dropdown-text">لوحة التحكم</span>
                                         </a>
                                         <a href="#" class="nav-dropdown-item" onclick="goToProfile()">
                                             <i class="fas fa-user-edit"></i>
-                                            <span>Profile</span>
+                                            <span class="dropdown-text">الملف الشخصي</span>
                                         </a>
                                         <div class="nav-dropdown-divider"></div>
                                         <a href="#" class="nav-dropdown-item nav-dropdown-logout" onclick="logout()">
                                             <i class="fas fa-sign-out-alt"></i>
-                                            <span>Logout</span>
+                                            <span class="dropdown-text">تسجيل الخروج</span>
                                         </a>
                                     </div>
                                 </div>
@@ -146,38 +159,38 @@
                         </div>
                         
                         <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight">
-                            Building Web Platform
+                            منصة بناء الويب
                         </h1>
                         <p class="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-6 text-blue-100 leading-relaxed font-medium">
-                            Connect Clients with Expert Engineers
+                            ربط العملاء بالمهندسين الخبراء
                         </p>
                         <p class="text-base sm:text-lg md:text-xl mb-8 lg:mb-12 text-blue-200 max-w-4xl mx-auto leading-relaxed">
-                            A comprehensive platform that bridges the gap between clients with building projects and skilled engineers. 
-                            From project planning to execution, we make construction dreams a reality.
+                            منصة شاملة تربط بين العملاء الذين لديهم مشاريع بناء والمهندسين المهرة. 
+                            من تخطيط المشروع إلى التنفيذ، نحقق أحلام البناء.
                         </p>
                         
                         <!-- Stats Row -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 lg:mb-12 max-w-3xl mx-auto">
                             <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
                                 <div class="text-2xl sm:text-3xl font-bold text-white">500+</div>
-                                <div class="text-sm sm:text-base text-blue-200">Engineers</div>
+                                <div class="text-sm sm:text-base text-blue-200">مهندس</div>
                             </div>
                             <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
                                 <div class="text-2xl sm:text-3xl font-bold text-white">1000+</div>
-                                <div class="text-sm sm:text-base text-blue-200">Projects</div>
+                                <div class="text-sm sm:text-base text-blue-200">مشروع</div>
                             </div>
                             <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
                                 <div class="text-2xl sm:text-3xl font-bold text-white">98%</div>
-                                <div class="text-sm sm:text-base text-blue-200">Success Rate</div>
+                                <div class="text-sm sm:text-base text-blue-200">معدل النجاح</div>
                             </div>
                         </div>
                         
                         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                             <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center" onclick="showLogin()">
-                                <i class="fas fa-rocket mr-2"></i> Get Started
+                                <i class="fas fa-rocket ml-2"></i> ابدأ الآن
                             </button>
                             <button class="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 flex items-center justify-center" onclick="showPage('about')">
-                                <i class="fas fa-play mr-2"></i> Watch Demo
+                                <i class="fas fa-play ml-2"></i> شاهد العرض التوضيحي
                             </button>
                         </div>
                     </div>
@@ -197,10 +210,10 @@
                             <i class="fas fa-cogs text-white text-2xl"></i>
                         </div>
                         <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
-                            How It Works
+                            كيف يعمل النظام
                         </h2>
                         <p class="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                            Our platform streamlines the entire process from project conception to completion
+                            منصتنا تبسط العملية بأكملها من بداية المشروع إلى الإنجاز
                         </p>
                     </div>
                     
@@ -222,9 +235,9 @@
                                     <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                         <i class="fas fa-search text-white text-2xl md:text-3xl"></i>
                                     </div>
-                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">Explore Engineers</h3>
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">استكشف المهندسين</h3>
                                     <p class="text-gray-600 leading-relaxed text-sm md:text-base">
-                                        Browse through our network of verified engineers. View their profiles, skills, experience, and previous projects to find the perfect match for your needs.
+                                        تصفح شبكة المهندسين المعتمدين لدينا. اعرض ملفاتهم الشخصية ومهاراتهم وخبراتهم ومشاريعهم السابقة للعثور على المطابق المثالي لاحتياجاتك.
                                     </p>
                                 </div>
                                 
@@ -251,9 +264,9 @@
                                     <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                         <i class="fas fa-file-alt text-white text-2xl md:text-3xl"></i>
                                     </div>
-                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">Submit Project</h3>
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">قدم مشروعك</h3>
                                     <p class="text-gray-600 leading-relaxed text-sm md:text-base">
-                                        Fill out a detailed project form describing your building requirements, timeline, and budget. Our system will match you with suitable engineers.
+                                        املأ نموذج مشروع مفصل يصف متطلبات البناء والجدول الزمني والميزانية. سيقوم نظامنا بمطابقتك مع المهندسين المناسبين.
                                     </p>
                                 </div>
                                 
@@ -277,9 +290,9 @@
                                     <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                         <i class="fas fa-handshake text-white text-2xl md:text-3xl"></i>
                                     </div>
-                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">Connect & Build</h3>
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">تواصل وابن</h3>
                                     <p class="text-gray-600 leading-relaxed text-sm md:text-base">
-                                        Once an engineer accepts your project, they'll create detailed project steps with timelines, costs, and tools. Track progress every step of the way.
+                                        بمجرد قبول المهندس لمشروعك، سيقوم بإنشاء خطوات مشروع مفصلة مع الجداول الزمنية والتكاليف والأدوات. تتبع التقدم في كل خطوة.
                                     </p>
                                 </div>
                                 
@@ -308,10 +321,10 @@
                             <i class="fas fa-star text-white text-2xl"></i>
                         </div>
                         <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
-                            Platform Features
+                            ميزات المنصة
                         </h2>
                         <p class="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                            Everything you need for successful project management
+                            كل ما تحتاجه لإدارة المشاريع بنجاح
                         </p>
                     </div>
                     
@@ -325,9 +338,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-users text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Role-Based Access</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">الوصول حسب الدور</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Separate dashboards for clients, engineers, and administrators with role-specific features and permissions.
+                                    لوحات تحكم منفصلة للعملاء والمهندسين والمدراء مع ميزات وأذونات خاصة بكل دور.
                                 </p>
                             </div>
                             
@@ -344,9 +357,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-tasks text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Project Management</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">إدارة المشاريع</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Detailed project steps with timelines, costs, tools, and image documentation for complete transparency.
+                                    خطوات مشروع مفصلة مع الجداول الزمنية والتكاليف والأدوات والوثائق المصورة للشفافية الكاملة.
                                 </p>
                             </div>
                             
@@ -363,9 +376,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-mobile-alt text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Responsive Design</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">التصميم المتجاوب</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Fully responsive interface that works perfectly on desktop, tablet, and mobile devices.
+                                    واجهة متجاوبة بالكامل تعمل بشكل مثالي على أجهزة الكمبيوتر والأجهزة اللوحية والهواتف المحمولة.
                                 </p>
                             </div>
                             
@@ -382,9 +395,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-database text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">JSON Database</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">قاعدة بيانات JSON</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Lightweight, efficient data storage using JSON files with local storage backup for reliability.
+                                    تخزين بيانات خفيف وفعال باستخدام ملفات JSON مع نسخ احتياطي محلي للوثوقية.
                                 </p>
                             </div>
                             
@@ -401,9 +414,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-search text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Smart Search</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">البحث الذكي</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Advanced search functionality to find engineers by name, skills, or location with real-time filtering.
+                                    وظيفة بحث متقدمة للعثور على المهندسين بالاسم أو المهارات أو الموقع مع التصفية في الوقت الفعلي.
                                 </p>
                             </div>
                             
@@ -420,9 +433,9 @@
                                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                     <i class="fas fa-chart-line text-white text-xl md:text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Analytics Dashboard</h3>
+                                <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">لوحة تحليل البيانات</h3>
                                 <p class="text-gray-600 text-sm md:text-base leading-relaxed">
-                                    Comprehensive admin dashboard with project statistics, engineer performance, and system overview.
+                                    لوحة تحكم إدارية شاملة مع إحصائيات المشاريع وأداء المهندسين ونظرة عامة على النظام.
                                 </p>
                             </div>
                             
@@ -451,7 +464,7 @@
                             <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-user text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-blue-900 mb-4">Clients</h3>
+                            <h3 class="text-2xl font-bold text-blue-900 mb-4" data-translate="forms.clients">Clients</h3>
                             <ul class="text-blue-800 text-left space-y-2">
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> Browse engineer profiles</li>
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> Submit project requests</li>
@@ -466,7 +479,7 @@
                             <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-hard-hat text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-green-900 mb-4">Engineers</h3>
+                            <h3 class="text-2xl font-bold text-green-900 mb-4" data-translate="forms.engineers">Engineers</h3>
                             <ul class="text-green-800 text-left space-y-2">
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> Create detailed profiles</li>
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> Receive project requests</li>
@@ -481,7 +494,7 @@
                             <div class="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-cog text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-purple-900 mb-4">Administrators</h3>
+                            <h3 class="text-2xl font-bold text-purple-900 mb-4" data-translate="forms.administrators">Administrators</h3>
                             <ul class="text-purple-800 text-left space-y-2">
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> View all engineers</li>
                                 <li><i class="fas fa-check text-green-500 mr-2"></i> Monitor project status</li>
@@ -519,7 +532,7 @@
         <!-- About Page -->
         <section id="about" class="page">
             <div class="container">
-                <h2 class="page-title">About Our Project</h2>
+                <h2 class="page-title" data-translate="pages.about">About Our Project</h2>
                 <div class="about-content">
                     <div class="about-text">
                         <p>This is a modern web application built with HTML5, CSS3, and JavaScript. It uses a JSON file as a database for data persistence, making it simple yet powerful.</p>
@@ -553,7 +566,7 @@
         <!-- Blog Page -->
         <section id="blog" class="page">
             <div class="container">
-                <h2 class="page-title">Blog Posts</h2>
+                <h2 class="page-title" data-translate="pages.blog">Blog Posts</h2>
                 <div class="blog-grid" id="blog-grid">
                     <!-- Blog posts will be loaded dynamically -->
                 </div>
@@ -563,7 +576,7 @@
         <!-- Contact Page -->
         <section id="contact" class="page">
             <div class="container">
-                <h2 class="page-title">Contact Us</h2>
+                <h2 class="page-title" data-translate="pages.contact">Contact Us</h2>
                 <div class="contact-content">
                     <div class="contact-info">
                         <div class="contact-item">
@@ -616,11 +629,11 @@
         <!-- Login Page -->
         <section id="login" class="page">
             <div class="container">
-                <h2 class="page-title">Login</h2>
+                <h2 class="page-title" data-translate="pages.login">Login</h2>
                 <div class="auth-content">
                     <div class="auth-tabs">
-                        <button class="auth-tab active" data-tab="login">Login</button>
-                        <button class="auth-tab" data-tab="register">Register</button>
+                        <button class="auth-tab active" data-tab="login" data-translate="forms.login">Login</button>
+                        <button class="auth-tab" data-tab="register" data-translate="forms.register">Register</button>
                     </div>
                     
                     <!-- Login Form -->
@@ -643,62 +656,62 @@
                     <!-- Register Form -->
                     <form class="auth-form" id="register-form">
                         <div class="form-group">
-                            <label for="register-username">Username</label>
+                            <label for="register-username" data-translate="forms.username">Username</label>
                             <input type="text" id="register-username" name="username" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-email">Email</label>
+                            <label for="register-email" data-translate="forms.email">Email</label>
                             <input type="email" id="register-email" name="email" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-password">Password</label>
+                            <label for="register-password" data-translate="forms.password">Password</label>
                             <input type="password" id="register-password" name="password" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-role">Role</label>
+                            <label for="register-role" data-translate="forms.role">Role</label>
                             <select id="register-role" name="role" required>
-                                <option value="">Select Role</option>
-                                <option value="engineer">Engineer</option>
-                                <option value="client">Client</option>
+                                <option value="" data-translate="forms.selectRole">Select Role</option>
+                                <option value="engineer" data-translate="forms.engineer">Engineer</option>
+                                <option value="client" data-translate="forms.client">Client</option>
                             </select>
                         </div>
                         
                         <!-- CSS linter fix -->
-                        <div id="engineer-fields" class="engineer-fields" style = "display: none">
+                        <div id="engineer-fields" class="engineer-fields" style="display: none">
                             <div class="form-group">
-                                <label for="register-experience">Years of Experience</label>
+                                <label for="register-experience" data-translate="forms.experience">Years of Experience</label>
                                 <input type="number" id="register-experience" name="experience" min="0" max="50">
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-photo">Profile Photo</label>
+                                <label for="register-photo" data-translate="forms.photo">Profile Photo</label>
                                 <input type="file" id="register-photo" name="photo" accept="image/*">
-                                <small class="form-help">Upload a professional photo (max 5MB)</small>
+                                <small class="form-help" data-translate="forms.uploadPhoto">Upload a professional photo (max 5MB)</small>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-cv">CV/Resume</label>
+                                <label for="register-cv" data-translate="forms.cv">CV/Resume</label>
                                 <input type="file" id="register-cv" name="cv" accept=".pdf,.doc,.docx">
-                                <small class="form-help">Upload your CV (PDF, DOC, DOCX - max 10MB)</small>
+                                <small class="form-help" data-translate="forms.uploadCV">Upload your CV (PDF, DOC, DOCX - max 10MB)</small>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-projects">Last Projects (Brief Description)</label>
-                                <textarea id="register-projects" name="projects" rows="4" placeholder="Describe your recent projects, technologies used, and achievements..."></textarea>
+                                <label for="register-projects" data-translate="forms.projects">Last Projects (Brief Description)</label>
+                                <textarea id="register-projects" name="projects" rows="4" placeholder="اوصف مشاريعك الأخيرة والتقنيات المستخدمة والإنجازات..."></textarea>
                             </div>
                             
                                                          <div class="form-group">
-                                 <label for="register-skills">Skills & Technologies</label>
-                                 <input type="text" id="register-skills" name="skills" placeholder="e.g., JavaScript, React, Node.js, Python, AWS">
+                                 <label for="register-skills" data-translate="forms.skills">Skills & Technologies</label>
+                                 <input type="text" id="register-skills" name="skills" placeholder="مثال: JavaScript, React, Node.js, Python, AWS">
                                  <small class="form-help">Separate skills with commas</small>
                              </div>
                              
                              <div class="form-group">
-                                 <label for="register-bio">Bio/About Me</label>
-                                 <textarea id="register-bio" name="bio" rows="4" placeholder="Tell us about yourself, your background, and what drives you..."></textarea>
+                                 <label for="register-bio" data-translate="forms.bio">Bio/About Me</label>
+                                 <textarea id="register-bio" name="bio" rows="4" placeholder="أخبرنا عن نفسك وخلفيتك وما يدفعك..."></textarea>
                                  <small class="form-help">Share your story and what makes you unique</small>
                              </div>
                          </div>
@@ -707,7 +720,7 @@
                         <!-- CSS linter fix -->
                         <div id="client-fields" class="client-fields" style="display: none;">
                             <div class="form-info">
-                                <p><i class="fas fa-info-circle"></i> As a client, you'll be able to create building projects and hire engineers after registration.</p>
+                                <p data-translate="forms.clientInfo"><i class="fas fa-info-circle"></i> As a client, you'll be able to create building projects and hire engineers after registration.</p>
                             </div>
                         </div>
                         
@@ -722,7 +735,7 @@
         <!-- Dashboard Page -->
         <section id="dashboard" class="page">
             <div class="container">
-                <h2 class="page-title">Dashboard</h2>
+                <h2 class="page-title" data-translate="pages.dashboard">Dashboard</h2>
                 <div class="dashboard-content">
                     <div class="user-info">
                         <div class="user-avatar">
@@ -732,18 +745,18 @@
                             </div>
                         </div>
                         <div class="user-details">
-                            <h3 id="dashboard-username">Welcome!</h3>
-                            <p id="dashboard-role">Role: <span id="user-role"></span></p>
-                            <p id="dashboard-email">Email: <span id="user-email"></span></p>
+                            <h3 id="dashboard-username" data-translate="forms.welcome">Welcome!</h3>
+                            <p id="dashboard-role" data-translate="forms.roleLabel">Role: <span id="user-role"></span></p>
+                            <p id="dashboard-email" data-translate="forms.emailLabel">Email: <span id="user-email"></span></p>
                         </div>
                                                  <div class="user-actions">
-                             <button id="edit-profile-btn" class="btn btn-primary" onclick="editProfile()" style="display: none;">
+                             <button id="edit-profile-btn" class="btn btn-primary" onclick="editProfile()" style="display: none;" data-translate="forms.editProfile">
                                  <i class="fas fa-edit"></i> Edit Profile
                              </button>
-                             <button class="btn btn-secondary" onclick="logout()">
+                             <button class="btn btn-secondary" onclick="logout()" data-translate="forms.logout">
                                  <i class="fas fa-sign-out-alt"></i> Logout
                              </button>
-                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="showEngineerExploration()" style="margin-left: var(--spacing-sm); display: none;">
+                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="showEngineerExploration()" style="margin-left: var(--spacing-sm); display: none;" data-translate="forms.exploreEngineers">
                                 <i class="fas fa-search"></i> Explore Engineers
                              </button>
                              
@@ -1155,7 +1168,7 @@
                                     </div>
                                     <input type="text" 
                                            id="admin-search-input" 
-                                           placeholder="Search engineers by name..." 
+                                           placeholder="ابحث عن المهندسين بالاسم..." 
                                            class="block w-full pl-10 pr-12 py-3 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                                     <button type="button" 
                                             id="clear-search-btn" 
@@ -1169,24 +1182,60 @@
                                 </div>
                             </div>
                             
+                            <!-- User Management CRUD Table -->
+                        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                            <!-- Table Header with Actions -->
+                            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-slate-900">User Management</h3>
+                                    <div class="flex items-center gap-3">
+                                        <button onclick="openAddUserModal()" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Add User
+                                        </button>
+                                        <button onclick="refreshUsersTable()" class="btn btn-secondary">
+                                            <i class="fas fa-sync-alt"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- Enhanced Table -->
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-slate-200">
                                     <thead class="bg-slate-50">
                                         <tr>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Engineer</th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                                <input type="checkbox" id="select-all-users" onchange="toggleSelectAllUsers()">
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">User</th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Role</th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
                                             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Experience</th>
                                             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Skills</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Accepted Projects</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project Status</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Total Steps</th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="admin-engineers-table" class="bg-white divide-y divide-slate-200">
+                                    <tbody id="admin-users-table" class="bg-white divide-y divide-slate-200">
                                         <!-- Table rows will be dynamically added here -->
                                     </tbody>
                                 </table>
                             </div>
+                            
+                            <!-- Table Footer -->
+                            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-slate-600">
+                                        <span id="users-count">0</span> users total
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button id="bulk-delete-btn" onclick="bulkDeleteUsers()" class="btn btn-danger" style="display: none;">
+                                            <i class="fas fa-trash"></i> Delete Selected
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                         
                         <!-- Rejected Projects Section -->
@@ -1298,21 +1347,21 @@
                     <!-- Client Dashboard (Separate from Engineer Dashboard) -->
                     <div id="client-dashboard" class="client-dashboard" style="display: none;">
                         <div class="client-welcome">
-                            <h3>Welcome, <span id="client-name">Client</span>!</h3>
-                            <p>Manage your building projects and connect with qualified engineers</p>
-                            <button class="btn btn-outline btn-sm" onclick="debugData()" style="margin-top: var(--spacing-sm);">
+                            <h3 data-translate="forms.welcome">Welcome, <span id="client-name">Client</span>!</h3>
+                            <p data-translate="forms.clientInfo">Manage your building projects and connect with qualified engineers</p>
+                            <button class="btn btn-outline btn-sm" onclick="debugData()" style="margin-top: var(--spacing-sm);" data-translate="forms.debugData">
                                 <i class="fas fa-bug"></i> Debug Data
                             </button>
-                            <button class="btn btn-outline btn-sm" onclick="addTestEngineers()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
+                            <button class="btn btn-outline btn-sm" onclick="addTestEngineers()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.addTestEngineers">
                                 <i class="fas fa-plus"></i> Add Test Engineers
                             </button>
-                            <button class="btn btn-outline btn-sm" onclick="clearAllData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
+                            <button class="btn btn-outline btn-sm" onclick="clearAllData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.clearData">
                                 <i class="fas fa-trash"></i> Clear Data
                             </button>
-                            <button class="btn btn-outline btn-sm" onclick="testClientDashboard()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
+                            <button class="btn btn-outline btn-sm" onclick="testClientDashboard()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.testDashboard">
                                 <i class="fas fa-vial"></i> Test Dashboard
                             </button>
-                            <button class="btn btn-outline btn-sm" onclick="createTestClientData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
+                            <button class="btn btn-outline btn-sm" onclick="createTestClientData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.createTestData">
                                 <i class="fas fa-database"></i> Create Test Data
                             </button>
                             <button class="btn btn-outline btn-sm" onclick="simpleTest()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
@@ -1325,29 +1374,29 @@
                             <div class="step active" id="step-1">
                                 <div class="step-number">1</div>
                                 <div class="step-content">
-                                    <h4>Explore Engineers</h4>
-                                    <p>Browse available engineers and their expertise</p>
+                                    <h4 data-translate="forms.exploreEngineersTitle">Explore Engineers</h4>
+                                    <p data-translate="forms.exploreEngineersDesc">Browse available engineers and their expertise</p>
                                 </div>
                             </div>
                             <div class="step" id="step-2">
                                 <div class="step-number">2</div>
                                 <div class="step-content">
-                                    <h4>Create Project</h4>
-                                    <p>Define your building project requirements</p>
+                                    <h4 data-translate="forms.workflowStep2">Create Project</h4>
+                                    <p data-translate="forms.workflowStep2Desc">Define your building project requirements</p>
                                 </div>
                             </div>
                             <div class="step" id="step-3">
                                 <div class="step-number">3</div>
                                 <div class="step-content">
-                                    <h4>Select Engineer</h4>
-                                    <p>Choose an engineer to lead your project</p>
+                                    <h4 data-translate="forms.workflowStep3">Select Engineer</h4>
+                                    <p data-translate="forms.workflowStep3Desc">Choose an engineer to lead your project</p>
                                 </div>
                             </div>
                             <div class="step" id="step-4">
                                 <div class="step-number">4</div>
                                 <div class="step-content">
-                                    <h4>Send Request</h4>
-                                    <p>Send project request to selected engineer</p>
+                                    <h4 data-translate="forms.workflowStep4">Send Request</h4>
+                                    <p data-translate="forms.workflowStep4Desc">Send project request to selected engineer</p>
                                 </div>
                             </div>
                         </div>
@@ -1358,9 +1407,9 @@
                                     <i class="fas fa-users"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4>Step 1: Explore Available Engineers</h4>
-                                    <p>First, browse and explore all available engineers to understand their skills and experience</p>
-                                    <button class="btn btn-primary" onclick="startEngineerExploration()">
+                                    <h4 data-translate="forms.step1Title">Step 1: Explore Available Engineers</h4>
+                                    <p data-translate="forms.step1Desc">First, browse and explore all available engineers to understand their skills and experience</p>
+                                    <button class="btn btn-primary" onclick="startEngineerExploration()" data-translate="forms.browseEngineers">
                                         <i class="fas fa-search"></i> Browse Engineers
                                     </button>
                                 </div>
@@ -1371,12 +1420,12 @@
                                     <i class="fas fa-building"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4>Step 2: Create Building Project</h4>
-                                    <p>After exploring engineers, create your building project with detailed requirements</p>
-                                    <button class="btn btn-secondary" onclick="openProjectForm()" disabled>
+                                    <h4 data-translate="forms.step2Title">Step 2: Create Building Project</h4>
+                                    <p data-translate="forms.step2Desc">After exploring engineers, create your building project with detailed requirements</p>
+                                    <button class="btn btn-secondary" onclick="openProjectForm()" disabled data-translate="forms.createProject">
                                         <i class="fas fa-plus"></i> Create Project
                                     </button>
-                                    <small class="action-note">Complete Step 1 first</small>
+                                    <small class="action-note" data-translate="forms.completeStep1">Complete Step 1 first</small>
                                 </div>
                             </div>
                             
@@ -1385,9 +1434,9 @@
                                     <i class="fas fa-paper-plane"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4>Project Requests</h4>
-                                    <p>View and manage your project requests to engineers</p>
-                                    <button class="btn btn-info" onclick="showProjectRequests()">
+                                    <h4 data-translate="forms.projectRequestsTitle">Project Requests</h4>
+                                    <p data-translate="forms.projectRequestsDesc">View and manage your project requests to engineers</p>
+                                    <button class="btn btn-info" onclick="showProjectRequests()" data-translate="forms.viewRequests">
                                         <i class="fas fa-list"></i> View Requests
                                     </button>
                                 </div>
@@ -1406,7 +1455,7 @@
                         <div id="engineers-browser" class="client-section" style="display: none;">
                             <h4><i class="fas fa-users"></i> Available Engineers</h4>
                             <div class="search-controls">
-                                <input type="text" id="engineer-search" class="search-input" placeholder="Search engineers by skills, experience...">
+                                <input type="text" id="engineer-search" class="search-input" placeholder="ابحث عن المهندسين بالمهارات والخبرة...">
                                 <button class="btn btn-primary" onclick="searchEngineers()">
                                     <i class="fas fa-search"></i> Search
                                 </button>
@@ -1465,18 +1514,18 @@
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-projects">Last Projects (Brief Description)</label>
+                                     <label for="edit-projects" data-translate="forms.projects">Last Projects (Brief Description)</label>
                                      <textarea id="edit-projects" name="projects" rows="4" placeholder="Describe your recent projects, technologies used, and achievements..."></textarea>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-skills">Skills & Technologies</label>
+                                     <label for="edit-skills" data-translate="forms.skills">Skills & Technologies</label>
                                      <input type="text" id="edit-skills" name="skills" placeholder="e.g., JavaScript, React, Node.js, Python, AWS">
                                      <small class="form-help">Separate skills with commas</small>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-bio">Bio/About Me</label>
+                                     <label for="edit-bio" data-translate="forms.bio">Bio/About Me</label>
                                      <textarea id="edit-bio" name="bio" rows="4" placeholder="Tell us about yourself, your background, and what drives you..."></textarea>
                                      <small class="form-help">Share your story and what makes you unique</small>
                                  </div>
@@ -1500,78 +1549,78 @@
     <div id="project-form-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-building"></i> Create Building Project</h3>
+                <h3><i class="fas fa-building"></i> <span data-translate="forms.createProjectTitle">Create Building Project</span></h3>
                 <button class="modal-close" onclick="closeProjectForm()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="building-project-form">
                     <!-- Basic Project Information -->
                     <div class="form-section">
-                        <h4><i class="fas fa-info-circle"></i> Basic Information</h4>
+                        <h4><i class="fas fa-info-circle"></i> <span data-translate="forms.basicInfo">Basic Information</span></h4>
                         
                         <div class="form-group">
-                            <label for="project-name">Project Name</label>
-                            <input type="text" id="project-name" name="projectName" required placeholder="e.g., My Dream House">
+                            <label for="project-name" data-translate="forms.projectName">Project Name</label>
+                            <input type="text" id="project-name" name="projectName" required placeholder="مثال: بيت أحلامي">
                         </div>
                         
                         <div class="form-group">
-                            <label for="project-type">Building Type</label>
+                            <label for="project-type" data-translate="forms.buildingType">Building Type</label>
                             <select id="project-type" name="projectType" required>
-                                <option value="">Select Building Type</option>
-                                <option value="residential-house">Residential House</option>
-                                <option value="apartment">Apartment Building</option>
-                                <option value="commercial">Commercial Building</option>
-                                <option value="warehouse">Warehouse</option>
-                                <option value="office">Office Building</option>
-                                <option value="villa">Villa</option>
-                                <option value="duplex">Duplex</option>
-                                <option value="other">Other</option>
+                                <option value="" data-translate="forms.selectBuildingType">Select Building Type</option>
+                                <option value="residential-house" data-translate="forms.residentialHouse">Residential House</option>
+                                <option value="apartment" data-translate="forms.apartment">Apartment Building</option>
+                                <option value="commercial" data-translate="forms.commercial">Commercial Building</option>
+                                <option value="warehouse" data-translate="forms.warehouse">Warehouse</option>
+                                <option value="office" data-translate="forms.office">Office Building</option>
+                                <option value="villa" data-translate="forms.villa">Villa</option>
+                                <option value="duplex" data-translate="forms.duplex">Duplex</option>
+                                <option value="other" data-translate="forms.other">Other</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label for="project-address">Project Address</label>
-                            <textarea id="project-address" name="address" required placeholder="Full address where the building will be constructed" rows="2"></textarea>
+                            <label for="project-address" data-translate="forms.projectAddress">Project Address</label>
+                            <textarea id="project-address" name="address" required placeholder="العنوان الكامل حيث سيتم بناء المبنى" rows="2"></textarea>
                         </div>
                     </div>
 
                     <!-- Building Specifications -->
                     <div class="form-section">
-                        <h4><i class="fas fa-ruler-combined"></i> Building Specifications</h4>
+                        <h4><i class="fas fa-ruler-combined"></i> <span data-translate="forms.buildingSpecs">Building Specifications</span></h4>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="building-size">Total Building Size (sq ft)</label>
-                                <input type="number" id="building-size" name="buildingSize" required min="1" placeholder="e.g., 2500">
+                                <label for="building-size" data-translate="forms.buildingSize">Total Building Size (sq ft)</label>
+                                <input type="number" id="building-size" name="buildingSize" required min="1" placeholder="مثال: 2500">
                             </div>
                             
                             <div class="form-group">
-                                <label for="lot-size">Lot Size (sq ft)</label>
-                                <input type="number" id="lot-size" name="lotSize" min="1" placeholder="e.g., 5000">
-                                <small class="form-help">Size of the land/plot</small>
+                                <label for="lot-size" data-translate="forms.lotSize">Lot Size (sq ft)</label>
+                                <input type="number" id="lot-size" name="lotSize" min="1" placeholder="مثال: 5000">
+                                <small class="form-help" data-translate="forms.landPlotSize">Size of the land/plot</small>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="floors-count">Number of Floors</label>
+                                <label for="floors-count" data-translate="forms.floorsCount">Number of Floors</label>
                                 <input type="number" id="floors-count" name="floorsCount" required min="1" max="10" placeholder="e.g., 2">
                             </div>
                             
                             <div class="form-group">
-                                <label for="bedrooms-count">Number of Bedrooms</label>
+                                <label for="bedrooms-count" data-translate="forms.bedroomsCount">Number of Bedrooms</label>
                                 <input type="number" id="bedrooms-count" name="bedroomsCount" min="1" max="20" placeholder="e.g., 3">
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="bathrooms-count">Number of Bathrooms</label>
+                                <label for="bathrooms-count" data-translate="forms.bathroomsCount">Number of Bathrooms</label>
                                 <input type="number" id="bathrooms-count" name="bathroomsCount" min="1" max="15" placeholder="e.g., 2">
                             </div>
                             
                             <div class="form-group">
-                                <label for="parking-spaces">Parking Spaces</label>
+                                <label for="parking-spaces" data-translate="forms.parkingSpaces">Parking Spaces</label>
                                 <input type="number" id="parking-spaces" name="parkingSpaces" min="0" max="10" placeholder="e.g., 2">
                             </div>
                         </div>
@@ -1686,37 +1735,37 @@
 
                     <!-- Project Details -->
                     <div class="form-section">
-                        <h4><i class="fas fa-calendar-alt"></i> Project Timeline & Budget</h4>
+                        <h4><i class="fas fa-calendar-alt"></i> <span data-translate="forms.projectTimeline">Project Timeline & Budget</span></h4>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="project-budget">Estimated Budget ($)</label>
-                                <input type="number" id="project-budget" name="budget" required min="10000" placeholder="e.g., 250000">
-                                <small class="form-help">Total estimated budget for the entire project</small>
+                                <label for="project-budget" data-translate="forms.budget">Estimated Budget ($)</label>
+                                <input type="number" id="project-budget" name="budget" required min="10000" placeholder="مثال: 250000">
+                                <small class="form-help" data-translate="forms.totalBudget">Total estimated budget for the entire project</small>
                             </div>
                             
                             <div class="form-group">
-                                <label for="project-timeline">Expected Timeline</label>
+                                <label for="project-timeline" data-translate="forms.timeline">Expected Timeline</label>
                                 <select id="project-timeline" name="timeline" required>
-                                    <option value="">Select Timeline</option>
-                                    <option value="1-3 months">1-3 months</option>
-                                    <option value="3-6 months">3-6 months</option>
-                                    <option value="6-12 months">6-12 months</option>
-                                    <option value="1-2 years">1-2 years</option>
-                                    <option value="2+ years">2+ years</option>
+                                    <option value="" data-translate="forms.selectTimeline">Select Timeline</option>
+                                    <option value="1-3 months" data-translate="forms.months1to3">1-3 months</option>
+                                    <option value="3-6 months" data-translate="forms.months3to6">3-6 months</option>
+                                    <option value="6-12 months" data-translate="forms.months6to12">6-12 months</option>
+                                    <option value="1-2 years" data-translate="forms.years1to2">1-2 years</option>
+                                    <option value="2+ years" data-translate="forms.years2plus">2+ years</option>
                                 </select>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="start-date">Preferred Start Date</label>
+                            <label for="start-date" data-translate="forms.startDate">Preferred Start Date</label>
                             <input type="date" id="start-date" name="startDate" min="2024-01-01">
                         </div>
                         
                         <div class="form-group">
-                            <label for="project-description">Additional Project Description</label>
-                            <textarea id="project-description" name="description" rows="4" placeholder="Describe your vision, architectural style preferences, specific requirements, quality expectations, etc."></textarea>
-                            <small class="form-help">Any additional details that will help engineers understand your project</small>
+                            <label for="project-description" data-translate="forms.description">Additional Project Description</label>
+                            <textarea id="project-description" name="description" rows="4" placeholder="اوصف رؤيتك وتفضيلاتك المعمارية والمتطلبات المحددة وتوقعات الجودة، إلخ."></textarea>
+                            <small class="form-help" data-translate="forms.additionalDetails">Any additional details that will help engineers understand your project</small>
                         </div>
                         
                         <div class="form-group">
@@ -1732,10 +1781,10 @@
 
                     <!-- Engineer Selection Section -->
                     <div class="form-section">
-                        <h4><i class="fas fa-user-tie"></i> Select Project Engineer</h4>
+                        <h4><i class="fas fa-user-tie"></i> <span data-translate="forms.engineerSelection">Select Project Engineer</span></h4>
                         <div class="engineer-selection">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Engineer Selection Required</h4>
-                            <p>You must select an engineer to lead your project. Please browse available engineers first if you haven't already.</p>
+                            <h4><i class="fas fa-exclamation-triangle"></i> <span data-translate="forms.engineerSelection">Engineer Selection Required</span></h4>
+                            <p data-translate="forms.engineerSelection">You must select an engineer to lead your project. Please browse available engineers first if you haven't already.</p>
                             
                             <div id="selected-engineer-display" class="selected-engineer" style="display: none;">
                                 <div class="selected-engineer-info">
@@ -1755,8 +1804,8 @@
                             </div>
                             
                             <div id="no-engineer-selected" class="no-engineer-selected">
-                                <p><i class="fas fa-info-circle"></i> No engineer selected yet</p>
-                                <button type="button" class="btn btn-primary" onclick="browseEngineersFromForm()">
+                                <p data-translate="forms.noEngineerSelected"><i class="fas fa-info-circle"></i> No engineer selected yet</p>
+                                <button type="button" class="btn btn-primary" onclick="browseEngineersFromForm()" data-translate="forms.browseEngineers">
                                     <i class="fas fa-search"></i> Browse Engineers
                                 </button>
                             </div>
@@ -1767,10 +1816,10 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeProjectForm()">
+                <button class="btn btn-secondary" onclick="closeProjectForm()" data-translate="forms.cancel">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button class="btn btn-primary" onclick="submitProject()">
+                <button class="btn btn-primary" onclick="submitProject()" data-translate="forms.createProject">
                     <i class="fas fa-save"></i> Create Project
                 </button>
             </div>
@@ -1837,6 +1886,145 @@
             </div>
         </div>
     </footer>
+
+    <!-- User CRUD Modals -->
+    
+    <!-- Add/Edit User Modal -->
+    <div id="user-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="user-modal-title">
+                    <i class="fas fa-user-plus"></i> Add New User
+                </h3>
+                <button class="modal-close" onclick="closeUserModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form" onsubmit="saveUser(event)">
+                    <input type="hidden" id="user-id" name="id">
+                    
+                    <div class="form-group">
+                        <label for="user-username">Username *</label>
+                        <input type="text" id="user-username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-password">Password *</label>
+                        <input type="password" id="user-password" name="password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-role">Role *</label>
+                        <select id="user-role" name="role" required onchange="toggleRoleFields()">
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="engineer">Engineer</option>
+                            <option value="client">Client</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Engineer-specific fields -->
+                    <div id="engineer-fields" class="engineer-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="user-experience">Experience (years)</label>
+                            <input type="number" id="user-experience" name="experience" min="0" max="50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-skills" data-translate="forms.skills">Skills (comma-separated)</label>
+                            <input type="text" id="user-skills" name="skills" placeholder="e.g., Construction, Architecture, Engineering">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-bio" data-translate="forms.bio">Bio</label>
+                            <textarea id="user-bio" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-projects" data-translate="forms.projects">Previous Projects</label>
+                            <textarea id="user-projects" name="projects" rows="3" placeholder="Describe your previous projects..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-photo">Profile Photo</label>
+                            <input type="file" id="user-photo" name="photo" accept="image/*">
+                            <div class="form-help">Max size: 5MB. Supported formats: JPG, PNG, GIF</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-cv">CV/Resume</label>
+                            <input type="file" id="user-cv" name="cv" accept=".pdf,.doc,.docx">
+                            <div class="form-help">Max size: 10MB. Supported formats: PDF, DOC, DOCX</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()" data-translate="forms.cancel">Cancel</button>
+                <button type="submit" form="user-form" class="btn btn-primary" data-translate="forms.save">
+                    <i class="fas fa-save"></i> Save User
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete User Confirmation Modal -->
+    <div id="delete-user-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-exclamation-triangle text-red-500"></i> Confirm Delete
+                </h3>
+                <button class="modal-close" onclick="closeDeleteUserModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this user?</p>
+                <div id="delete-user-info" class="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                    <!-- User info will be populated here -->
+                </div>
+                <p class="text-red-600 font-semibold mt-4">This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteUserModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">
+                    <i class="fas fa-trash"></i> Delete User
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View User Details Modal -->
+    <div id="view-user-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-user"></i> User Details
+                </h3>
+                <button class="modal-close" onclick="closeViewUserModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="user-details-content">
+                    <!-- User details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeViewUserModal()">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editUserFromView()">
+                    <i class="fas fa-edit"></i> Edit User
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script src="starter.js"></script>

@@ -6,6 +6,7 @@ class WebApp {
         this.data = null;
         this.currentPage = 'home';
         this.currentUser = null;
+        this.currentLanguage = 'ar'; // Default to Arabic
         this.init();
     }
 
@@ -19,6 +20,7 @@ class WebApp {
             this.setupMobileMenu();
             this.setupAuthentication();
             this.setupEditProfile();
+            this.setupLanguageSwitcher();
             this.checkAuthStatus();
             console.log('Web application initialized successfully');
         } catch (error) {
@@ -3626,7 +3628,7 @@ class WebApp {
             
             // Load admin data
             this.loadAdminOverview();
-            this.loadAdminEngineersTable();
+            this.loadUsersTable();
             this.loadRejectedProjects();
             
             // Initialize search functionality
@@ -4459,6 +4461,394 @@ class WebApp {
         }
     }
 
+    // Language Switcher Setup
+    setupLanguageSwitcher() {
+        // Load saved language preference
+        const savedLang = localStorage.getItem('appLanguage');
+        if (savedLang) {
+            this.currentLanguage = savedLang;
+        }
+        
+        // Apply initial language
+        this.applyLanguage(this.currentLanguage);
+        
+        // Update language switcher button
+        this.updateLanguageSwitcher();
+    }
+
+    // Toggle between Arabic and English
+    toggleLanguage() {
+        this.currentLanguage = this.currentLanguage === 'ar' ? 'en' : 'ar';
+        
+        this.applyLanguage(this.currentLanguage);
+        this.updateLanguageSwitcher();
+        
+        // Save language preference
+        localStorage.setItem('appLanguage', this.currentLanguage);
+        
+        // Show success message using translations
+        const translations = this.data?.translations?.[this.currentLanguage];
+        const message = translations?.messages?.languageChanged || 
+                      (this.currentLanguage === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language changed to English');
+        this.showSuccess(message);
+    }
+
+    // Apply language to the interface
+    applyLanguage(language) {
+        const html = document.documentElement;
+        const body = document.body;
+        
+        if (language === 'ar') {
+            html.setAttribute('lang', 'ar');
+            html.setAttribute('dir', 'rtl');
+            body.classList.add('arabic-text');
+            body.classList.remove('english-text');
+        } else {
+            html.setAttribute('lang', 'en');
+            html.setAttribute('dir', 'ltr');
+            body.classList.add('english-text');
+            body.classList.remove('arabic-text');
+        }
+        
+        // Update navigation text
+        this.updateNavigationText(language);
+        
+        // Update page content
+        this.updatePageContent(language);
+    }
+
+    // Update navigation text based on language
+    updateNavigationText(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+        
+        const navTexts = document.querySelectorAll('.nav-text');
+        const dropdownTexts = document.querySelectorAll('.dropdown-text');
+        
+        // Update navigation items
+        const navItems = [
+            { selector: '[data-page="home"] .nav-text', key: 'home' },
+            { selector: '[data-page="about"] .nav-text', key: 'about' },
+            { selector: '[data-page="blog"] .nav-text', key: 'blog' },
+            { selector: '[data-page="contact"] .nav-text', key: 'contact' },
+            { selector: '[data-page="login"] .nav-text', key: 'login' }
+        ];
+        
+        navItems.forEach(item => {
+            const element = document.querySelector(item.selector);
+            if (element && translations.navigation[item.key]) {
+                element.textContent = translations.navigation[item.key];
+            }
+        });
+        
+        // Update dropdown items
+        const dropdownItems = [
+            { selector: '.nav-dropdown-item[onclick="goToDashboard()"] .dropdown-text', key: 'dashboard' },
+            { selector: '.nav-dropdown-item[onclick="goToProfile()"] .dropdown-text', key: 'profile' },
+            { selector: '.nav-dropdown-item[onclick="logout()"] .dropdown-text', key: 'logout' }
+        ];
+        
+        dropdownItems.forEach(item => {
+            const element = document.querySelector(item.selector);
+            if (element && translations.navigation[item.key]) {
+                element.textContent = translations.navigation[item.key];
+            }
+        });
+    }
+
+    // Update page content based on language
+    updatePageContent(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+        
+        // Update site title
+        const siteTitle = document.querySelector('.site-title');
+        if (siteTitle && translations.site?.title) {
+            siteTitle.textContent = translations.site.title;
+        }
+        
+        // Update page titles and content
+        this.updatePageTitles(language);
+        
+        // Update all form labels and placeholders
+        this.updateFormElements(language);
+        
+        // Update all alt texts
+        this.updateAltTexts(language);
+        
+        // Update all help texts
+        this.updateHelpTexts(language);
+        
+        // Update all elements with data-translate attributes
+        this.updateDataTranslateElements(language);
+    }
+
+    // Update page titles and content
+    updatePageTitles(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+        
+        // Update page titles
+        const pageTitles = document.querySelectorAll('.page-title');
+        pageTitles.forEach(title => {
+            const pageId = title.closest('.page')?.id;
+            if (pageId && translations.navigation[pageId]) {
+                title.textContent = translations.navigation[pageId];
+            }
+        });
+    }
+
+    // Update language switcher button
+    updateLanguageSwitcher() {
+        const langBtn = document.getElementById('current-lang');
+        if (langBtn) {
+            const translations = this.data?.translations?.[this.currentLanguage];
+            langBtn.textContent = translations?.site?.currentLanguage || 
+                                (this.currentLanguage === 'ar' ? 'العربية' : 'English');
+        }
+    }
+
+    // Update form elements (labels, placeholders, help text)
+    updateFormElements(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+
+        // Update form labels
+        const labelMappings = [
+            { selector: 'label[for="name"]', key: 'name' },
+            { selector: 'label[for="email"]', key: 'email' },
+            { selector: 'label[for="password"]', key: 'password' },
+            { selector: 'label[for="confirmPassword"]', key: 'confirmPassword' },
+            { selector: 'label[for="phone"]', key: 'phone' },
+            { selector: 'label[for="city"]', key: 'city' },
+            { selector: 'label[for="message"]', key: 'message' },
+            { selector: 'label[for="login-email"]', key: 'email' },
+            { selector: 'label[for="login-password"]', key: 'password' },
+            { selector: 'label[for="register-projects"]', key: 'projects' },
+            { selector: 'label[for="register-skills"]', key: 'skills' },
+            { selector: 'label[for="register-bio"]', key: 'bio' },
+            { selector: 'label[for="edit-projects"]', key: 'projects' },
+            { selector: 'label[for="edit-skills"]', key: 'skills' },
+            { selector: 'label[for="edit-bio"]', key: 'bio' },
+            { selector: 'label[for="project-name"]', key: 'projectName' },
+            { selector: 'label[for="project-address"]', key: 'projectAddress' },
+            { selector: 'label[for="building-size"]', key: 'buildingSize' },
+            { selector: 'label[for="lot-size"]', key: 'lotSize' },
+            { selector: 'label[for="floors-count"]', key: 'floorsCount' },
+            { selector: 'label[for="bedrooms-count"]', key: 'bedroomsCount' },
+            { selector: 'label[for="bathrooms-count"]', key: 'bathroomsCount' },
+            { selector: 'label[for="parking-spaces"]', key: 'parkingSpaces' },
+            { selector: 'label[for="project-budget"]', key: 'budget' },
+            { selector: 'label[for="project-description"]', key: 'description' },
+            { selector: 'label[for="user-skills"]', key: 'skills' },
+            { selector: 'label[for="user-bio"]', key: 'bio' },
+            { selector: 'label[for="user-projects"]', key: 'projects' }
+        ];
+
+        labelMappings.forEach(mapping => {
+            const element = document.querySelector(mapping.selector);
+            if (element && translations.forms[mapping.key]) {
+                element.textContent = translations.forms[mapping.key];
+            }
+        });
+
+        // Update placeholders
+        const placeholderMappings = [
+            { selector: '#register-projects', key: 'describeProjects' },
+            { selector: '#register-skills', key: 'skillsExample' },
+            { selector: '#register-bio', key: 'bioExample' },
+            { selector: '#edit-projects', key: 'describeProjects' },
+            { selector: '#edit-skills', key: 'skillsExample' },
+            { selector: '#edit-bio', key: 'bioExample' },
+            { selector: '#project-name', key: 'projectNameExample' },
+            { selector: '#project-address', key: 'addressExample' },
+            { selector: '#building-size', key: 'sizeExample' },
+            { selector: '#lot-size', key: 'sizeExample' },
+            { selector: '#floors-count', key: 'sizeExample' },
+            { selector: '#bedrooms-count', key: 'sizeExample' },
+            { selector: '#bathrooms-count', key: 'sizeExample' },
+            { selector: '#parking-spaces', key: 'sizeExample' },
+            { selector: '#project-budget', key: 'budgetExample' },
+            { selector: '#project-description', key: 'descriptionExample' },
+            { selector: '#user-skills', key: 'skillsExample' },
+            { selector: '#user-bio', key: 'tellAboutYourself' },
+            { selector: '#user-projects', key: 'describePreviousProjects' },
+            { selector: '#admin-search-input', key: 'searchEngineers' },
+            { selector: '#engineer-search', key: 'searchBySkills' }
+        ];
+
+        placeholderMappings.forEach(mapping => {
+            const element = document.querySelector(mapping.selector);
+            if (element && translations.placeholders[mapping.key]) {
+                element.placeholder = translations.placeholders[mapping.key];
+            }
+        });
+
+        // Update select options
+        const selectOptionMappings = [
+            { selector: '#register-role option[value=""]', key: 'selectRole' },
+            { selector: '#register-role option[value="engineer"]', key: 'engineer' },
+            { selector: '#register-role option[value="client"]', key: 'client' },
+            { selector: '#project-type option[value=""]', key: 'selectBuildingType' },
+            { selector: '#project-type option[value="residential-house"]', key: 'residentialHouse' },
+            { selector: '#project-type option[value="apartment"]', key: 'apartment' },
+            { selector: '#project-type option[value="commercial"]', key: 'commercial' },
+            { selector: '#project-type option[value="warehouse"]', key: 'warehouse' },
+            { selector: '#project-type option[value="office"]', key: 'office' },
+            { selector: '#project-type option[value="villa"]', key: 'villa' },
+            { selector: '#project-type option[value="duplex"]', key: 'duplex' },
+            { selector: '#project-type option[value="other"]', key: 'other' },
+            { selector: '#project-timeline option[value=""]', key: 'selectTimeline' },
+            { selector: '#project-timeline option[value="1-3 months"]', key: 'months1to3' },
+            { selector: '#project-timeline option[value="3-6 months"]', key: 'months3to6' },
+            { selector: '#project-timeline option[value="6-12 months"]', key: 'months6to12' },
+            { selector: '#project-timeline option[value="1-2 years"]', key: 'years1to2' },
+            { selector: '#project-timeline option[value="2+ years"]', key: 'years2plus' }
+        ];
+
+        selectOptionMappings.forEach(mapping => {
+            const element = document.querySelector(mapping.selector);
+            if (element && translations.forms[mapping.key]) {
+                element.textContent = translations.forms[mapping.key];
+            }
+        });
+    }
+
+    // Update alt texts for images
+    updateAltTexts(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+
+        const altMappings = [
+            { selector: '#nav-user-photo, #nav-dropdown-photo', key: 'userPhoto' },
+            { selector: '#dashboard-user-photo', key: 'userPhoto' },
+            { selector: '#engineer-photo', key: 'engineerPhoto' },
+            { selector: '#selected-engineer-photo', key: 'engineerPhoto' }
+        ];
+
+        altMappings.forEach(mapping => {
+            const elements = document.querySelectorAll(mapping.selector);
+            elements.forEach(element => {
+                if (translations.messages[mapping.key]) {
+                    element.alt = translations.messages[mapping.key];
+                }
+            });
+        });
+    }
+
+    // Update help texts
+    updateHelpTexts(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+
+        const helpMappings = [
+            { selector: '.form-help', key: 'separateSkills' },
+            { selector: 'small.form-help', key: 'separateSkills' }
+        ];
+
+        // Update specific help texts
+        const helpTexts = document.querySelectorAll('.form-help');
+        helpTexts.forEach((help, index) => {
+            if (index === 0 && translations.help.separateSkills) {
+                help.textContent = translations.help.separateSkills;
+            } else if (index === 1 && translations.help.shareStory) {
+                help.textContent = translations.help.shareStory;
+            } else if (help.textContent.includes('Size of the land') && translations.help.landPlotSize) {
+                help.textContent = translations.help.landPlotSize;
+            } else if (help.textContent.includes('Total estimated budget') && translations.help.totalBudget) {
+                help.textContent = translations.help.totalBudget;
+            } else if (help.textContent.includes('additional details') && translations.help.additionalDetails) {
+                help.textContent = translations.help.additionalDetails;
+            }
+        });
+    }
+
+    // Update elements with data-translate attributes
+    updateDataTranslateElements(language) {
+        const translations = this.data?.translations?.[language];
+        if (!translations) return;
+
+        const elements = document.querySelectorAll('[data-translate]');
+        
+        elements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            const keys = key.split('.');
+            let value = translations;
+            
+            for (const k of keys) {
+                value = value?.[k];
+            }
+            
+            if (value) {
+                if (element.tagName === 'INPUT' && element.type === 'text') {
+                    element.placeholder = value;
+                } else if (element.tagName === 'TITLE') {
+                    element.textContent = value;
+                } else {
+                    element.textContent = value;
+                }
+            }
+        });
+    }
+
+    // Saudi Arabia specific formatting
+    formatDateForSaudi(dateString) {
+        const date = new Date(dateString);
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            calendar: 'islamic-umalqura', // Islamic calendar
+            timeZone: 'Asia/Riyadh'
+        };
+        
+        if (this.currentLanguage === 'ar') {
+            return new Intl.DateTimeFormat('ar-SA', options).format(date);
+        } else {
+            return new Intl.DateTimeFormat('en-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Asia/Riyadh'
+            }).format(date);
+        }
+    }
+
+    // Format currency for Saudi Arabia
+    formatCurrency(amount) {
+        const options = {
+            style: 'currency',
+            currency: 'SAR',
+            minimumFractionDigits: 2
+        };
+        
+        if (this.currentLanguage === 'ar') {
+            return new Intl.NumberFormat('ar-SA', options).format(amount);
+        } else {
+            return new Intl.NumberFormat('en-SA', options).format(amount);
+        }
+    }
+
+    // Format phone number for Saudi Arabia
+    formatSaudiPhone(phone) {
+        // Remove any non-digit characters
+        const cleaned = phone.replace(/\D/g, '');
+        
+        // Saudi phone number patterns
+        if (cleaned.startsWith('966')) {
+            // International format: +966 50 123 4567
+            return `+966 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8)}`;
+        } else if (cleaned.startsWith('05')) {
+            // National format: 050 123 4567
+            return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+        } else if (cleaned.startsWith('5')) {
+            // Local format: 050 123 4567
+            return `0${cleaned.slice(0, 2)} ${cleaned.slice(2, 5)} ${cleaned.slice(5)}`;
+        }
+        
+        return phone; // Return original if no pattern matches
+    }
+
     // Handle profile update
     async handleProfileUpdate(form) {
         const formData = new FormData(form);
@@ -5193,6 +5583,407 @@ class WebApp {
         // Refresh the dashboard
         this.updateDashboard();
     }
+    
+    // User CRUD Functions
+    loadUsersTable() {
+        console.log('=== LOAD USERS TABLE ===');
+        
+        const tableBody = document.getElementById('admin-users-table');
+        const usersCount = document.getElementById('users-count');
+        if (!tableBody) return;
+        
+        // Get all users (both from users array and registeredUsers)
+        const allUsers = [
+            ...(this.data.users || []),
+            ...(this.data.registeredUsers || [])
+        ];
+        
+        if (usersCount) {
+            usersCount.textContent = allUsers.length;
+        }
+        
+        if (allUsers.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-100 rounded-2xl mb-4">
+                            <i class="fas fa-users text-slate-400 text-2xl"></i>
+                        </div>
+                        <p class="text-slate-600 text-lg">No users found</p>
+                        <p class="text-slate-500 text-sm mt-2">Click "Add User" to create your first user</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const tableRows = allUsers.map(user => {
+            const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()) : [];
+            const skillsDisplay = skillsArray.length > 0 ? skillsArray.slice(0, 2).join(', ') + (skillsArray.length > 2 ? '...' : '') : '-';
+            const createdDate = new Date(user.createdAt).toLocaleDateString();
+            
+            return `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="updateBulkActions()">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                ${user.photo ? 
+                                    `<img class="h-10 w-10 rounded-full object-cover" src="${user.photo}" alt="${user.username}">` :
+                                    `<div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                        <span class="text-white font-semibold text-sm">${user.username.charAt(0).toUpperCase()}</span>
+                                    </div>`
+                                }
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-slate-900">${user.username}</div>
+                                <div class="text-sm text-slate-500">ID: ${user.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${this.getRoleBadgeClass(user.role)}">
+                            ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-slate-900">${user.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-slate-900">${user.experience || 0} years</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-slate-900 max-w-xs truncate" title="${user.skills || 'No skills listed'}">${skillsDisplay}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-slate-900">${createdDate}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center gap-2">
+                            <button onclick="viewUser(${user.id})" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-900" title="Edit User">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900" title="Delete User">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        tableBody.innerHTML = tableRows;
+    }
+    
+    getRoleBadgeClass(role) {
+        switch(role) {
+            case 'admin': return 'bg-red-100 text-red-800';
+            case 'engineer': return 'bg-blue-100 text-blue-800';
+            case 'client': return 'bg-green-100 text-green-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    // CRUD Operations
+    openAddUserModal() {
+        document.getElementById('user-modal-title').innerHTML = '<i class="fas fa-user-plus"></i> Add New User';
+        document.getElementById('user-form').reset();
+        document.getElementById('user-id').value = '';
+        document.getElementById('engineer-fields').style.display = 'none';
+        document.getElementById('user-modal').style.display = 'flex';
+    }
+    
+    editUser(userId) {
+        const user = this.findUserById(userId);
+        if (!user) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+        
+        document.getElementById('user-modal-title').innerHTML = '<i class="fas fa-user-edit"></i> Edit User';
+        document.getElementById('user-id').value = user.id;
+        document.getElementById('user-username').value = user.username;
+        document.getElementById('user-email').value = user.email;
+        document.getElementById('user-password').value = user.password;
+        document.getElementById('user-role').value = user.role;
+        
+        // Show engineer fields if role is engineer
+        if (user.role === 'engineer') {
+            document.getElementById('engineer-fields').style.display = 'block';
+            document.getElementById('user-experience').value = user.experience || '';
+            document.getElementById('user-skills').value = user.skills || '';
+            document.getElementById('user-bio').value = user.bio || '';
+            document.getElementById('user-projects').value = user.projects || '';
+        } else {
+            document.getElementById('engineer-fields').style.display = 'none';
+        }
+        
+        document.getElementById('user-modal').style.display = 'flex';
+    }
+    
+    viewUser(userId) {
+        const user = this.findUserById(userId);
+        if (!user) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+        
+        const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()) : [];
+        const createdDate = new Date(user.createdAt).toLocaleString();
+        
+        const userDetails = `
+            <div class="space-y-6">
+                <!-- User Header -->
+                <div class="flex items-center space-x-6">
+                    <div class="flex-shrink-0">
+                        ${user.photo ? 
+                            `<img class="h-20 w-20 rounded-full object-cover" src="${user.photo}" alt="${user.username}">` :
+                            `<div class="h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                <span class="text-white font-semibold text-2xl">${user.username.charAt(0).toUpperCase()}</span>
+                            </div>`
+                        }
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-slate-900">${user.username}</h4>
+                        <p class="text-slate-600">${user.email}</p>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${this.getRoleBadgeClass(user.role)} mt-2">
+                            ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- User Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-slate-900 mb-2">Basic Information</h5>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">ID:</span> ${user.id}</div>
+                            <div><span class="font-medium">Username:</span> ${user.username}</div>
+                            <div><span class="font-medium">Email:</span> ${user.email}</div>
+                            <div><span class="font-medium">Role:</span> ${user.role}</div>
+                            <div><span class="font-medium">Created:</span> ${createdDate}</div>
+                        </div>
+                    </div>
+                    
+                    ${user.role === 'engineer' ? `
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-slate-900 mb-2">Professional Information</h5>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Experience:</span> ${user.experience || 0} years</div>
+                            <div><span class="font-medium">Skills:</span> ${skillsArray.length > 0 ? skillsArray.join(', ') : 'None listed'}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                ${user.role === 'engineer' && (user.bio || user.projects) ? `
+                <div class="space-y-4">
+                    ${user.bio ? `
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-slate-900 mb-2">Bio</h5>
+                        <p class="text-slate-700">${user.bio}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${user.projects ? `
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-slate-900 mb-2">Previous Projects</h5>
+                        <p class="text-slate-700">${user.projects}</p>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('user-details-content').innerHTML = userDetails;
+        document.getElementById('view-user-modal').style.display = 'flex';
+    }
+    
+    deleteUser(userId) {
+        const user = this.findUserById(userId);
+        if (!user) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+        
+        // Don't allow deleting the main admin user
+        if (user.id === 1 && user.role === 'admin') {
+            this.showNotification('Cannot delete the main admin user', 'error');
+            return;
+        }
+        
+        const userInfo = `
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    ${user.photo ? 
+                        `<img class="h-12 w-12 rounded-full object-cover" src="${user.photo}" alt="${user.username}">` :
+                        `<div class="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-white font-semibold">${user.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-900">${user.username}</div>
+                    <div class="text-sm text-slate-600">${user.email}</div>
+                    <div class="text-sm">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${this.getRoleBadgeClass(user.role)}">
+                            ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('delete-user-info').innerHTML = userInfo;
+        document.getElementById('delete-user-modal').style.display = 'flex';
+        
+        // Store the user ID for deletion
+        this.userToDelete = userId;
+    }
+    
+    findUserById(userId) {
+        const allUsers = [
+            ...(this.data.users || []),
+            ...(this.data.registeredUsers || [])
+        ];
+        return allUsers.find(user => user.id == userId);
+    }
+    
+    saveUser(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const userData = {
+            id: formData.get('id') || Date.now(),
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            role: formData.get('role'),
+            createdAt: formData.get('id') ? this.findUserById(formData.get('id'))?.createdAt : new Date().toISOString()
+        };
+        
+        // Add role-specific fields
+        if (userData.role === 'engineer') {
+            userData.experience = parseInt(formData.get('experience')) || 0;
+            userData.skills = formData.get('skills') || '';
+            userData.bio = formData.get('bio') || '';
+            userData.projects = formData.get('projects') || '';
+            
+            // Handle file uploads
+            const photoFile = formData.get('photo');
+            const cvFile = formData.get('cv');
+            
+            if (photoFile && photoFile.size > 0) {
+                userData.photo = URL.createObjectURL(photoFile);
+            } else if (formData.get('id')) {
+                // Keep existing photo if editing and no new photo uploaded
+                const existingUser = this.findUserById(formData.get('id'));
+                userData.photo = existingUser?.photo || null;
+            }
+            
+            if (cvFile && cvFile.size > 0) {
+                userData.cv = URL.createObjectURL(cvFile);
+            } else if (formData.get('id')) {
+                // Keep existing CV if editing and no new CV uploaded
+                const existingUser = this.findUserById(formData.get('id'));
+                userData.cv = existingUser?.cv || null;
+            }
+        }
+        
+        // Check if email already exists (for new users or if email changed)
+        const existingUser = this.findUserById(userData.id);
+        if (!existingUser || existingUser.email !== userData.email) {
+            const allUsers = [
+                ...(this.data.users || []),
+                ...(this.data.registeredUsers || [])
+            ];
+            const emailExists = allUsers.some(u => u.email === userData.email && u.id != userData.id);
+            
+            if (emailExists) {
+                this.showNotification('Email already exists', 'error');
+                return;
+            }
+        }
+        
+        // Save user
+        if (formData.get('id')) {
+            // Update existing user
+            this.updateUser(userData);
+            this.showNotification('User updated successfully', 'success');
+        } else {
+            // Add new user
+            this.addUser(userData);
+            this.showNotification('User created successfully', 'success');
+        }
+        
+        this.closeUserModal();
+        this.loadUsersTable();
+    }
+    
+    addUser(userData) {
+        if (!this.data.registeredUsers) {
+            this.data.registeredUsers = [];
+        }
+        this.data.registeredUsers.push(userData);
+        this.saveDataToJSON();
+    }
+    
+    updateUser(userData) {
+        // Update in users array (for admin user)
+        const userIndex = this.data.users?.findIndex(u => u.id == userData.id);
+        if (userIndex !== undefined && userIndex >= 0) {
+            this.data.users[userIndex] = userData;
+        }
+        
+        // Update in registeredUsers array
+        const registeredUserIndex = this.data.registeredUsers?.findIndex(u => u.id == userData.id);
+        if (registeredUserIndex !== undefined && registeredUserIndex >= 0) {
+            this.data.registeredUsers[registeredUserIndex] = userData;
+        }
+        
+        this.saveDataToJSON();
+    }
+    
+    confirmDeleteUser() {
+        if (!this.userToDelete) return;
+        
+        // Remove from users array
+        if (this.data.users) {
+            this.data.users = this.data.users.filter(u => u.id != this.userToDelete);
+        }
+        
+        // Remove from registeredUsers array
+        if (this.data.registeredUsers) {
+            this.data.registeredUsers = this.data.registeredUsers.filter(u => u.id != this.userToDelete);
+        }
+        
+        this.saveDataToJSON();
+        this.showNotification('User deleted successfully', 'success');
+        this.closeDeleteUserModal();
+        this.loadUsersTable();
+        
+        this.userToDelete = null;
+    }
+    
+    closeUserModal() {
+        document.getElementById('user-modal').style.display = 'none';
+        document.getElementById('user-form').reset();
+    }
+    
+    closeDeleteUserModal() {
+        document.getElementById('delete-user-modal').style.display = 'none';
+        this.userToDelete = null;
+    }
+    
+    closeViewUserModal() {
+        document.getElementById('view-user-modal').style.display = 'none';
+    }
 }
 
 // Initialize the application when DOM is loaded
@@ -5206,6 +5997,20 @@ document.addEventListener('DOMContentLoaded', () => {
 window.showPage = function(pageId) {
     if (window.webApp) {
         window.webApp.showPage(pageId);
+    }
+};
+
+// Global language toggle function
+window.toggleLanguage = function() {
+    if (window.webApp) {
+        window.webApp.toggleLanguage();
+    }
+};
+
+// Global showLogin function
+window.showLogin = function() {
+    if (window.webApp) {
+        window.webApp.showPage('login');
     }
 };
 
@@ -6051,3 +6856,153 @@ document.addEventListener('click', function(event) {
         }
     }
 });
+
+// User CRUD Global Functions
+window.openAddUserModal = function() {
+    if (window.webApp) {
+        window.webApp.openAddUserModal();
+    }
+};
+
+window.editUser = function(userId) {
+    if (window.webApp) {
+        window.webApp.editUser(userId);
+    }
+};
+
+window.viewUser = function(userId) {
+    if (window.webApp) {
+        window.webApp.viewUser(userId);
+    }
+};
+
+window.deleteUser = function(userId) {
+    if (window.webApp) {
+        window.webApp.deleteUser(userId);
+    }
+};
+
+window.saveUser = function(event) {
+    if (window.webApp) {
+        window.webApp.saveUser(event);
+    }
+};
+
+window.confirmDeleteUser = function() {
+    if (window.webApp) {
+        window.webApp.confirmDeleteUser();
+    }
+};
+
+window.closeUserModal = function() {
+    if (window.webApp) {
+        window.webApp.closeUserModal();
+    }
+};
+
+window.closeDeleteUserModal = function() {
+    if (window.webApp) {
+        window.webApp.closeDeleteUserModal();
+    }
+};
+
+window.closeViewUserModal = function() {
+    if (window.webApp) {
+        window.webApp.closeViewUserModal();
+    }
+};
+
+window.editUserFromView = function() {
+    if (window.webApp) {
+        window.webApp.closeViewUserModal();
+        // Get the user ID from the view modal and edit
+        const userDetails = document.getElementById('user-details-content');
+        const userId = userDetails.dataset.userId;
+        if (userId) {
+            window.webApp.editUser(userId);
+        }
+    }
+};
+
+window.toggleRoleFields = function() {
+    const roleSelect = document.getElementById('user-role');
+    const engineerFields = document.getElementById('engineer-fields');
+    
+    if (roleSelect && engineerFields) {
+        if (roleSelect.value === 'engineer') {
+            engineerFields.style.display = 'block';
+        } else {
+            engineerFields.style.display = 'none';
+        }
+    }
+};
+
+window.refreshUsersTable = function() {
+    if (window.webApp) {
+        window.webApp.loadUsersTable();
+    }
+};
+
+window.toggleSelectAllUsers = function() {
+    const selectAllCheckbox = document.getElementById('select-all-users');
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    
+    if (selectAllCheckbox && userCheckboxes) {
+        userCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        updateBulkActions();
+    }
+};
+
+window.updateBulkActions = function() {
+    const userCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    
+    if (bulkDeleteBtn) {
+        if (userCheckboxes.length > 0) {
+            bulkDeleteBtn.style.display = 'inline-flex';
+            bulkDeleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${userCheckboxes.length})`;
+        } else {
+            bulkDeleteBtn.style.display = 'none';
+        }
+    }
+};
+
+window.bulkDeleteUsers = function() {
+    const userCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+    const userIds = Array.from(userCheckboxes).map(cb => cb.value);
+    
+    if (userIds.length === 0) {
+        if (window.webApp) {
+            window.webApp.showNotification('No users selected', 'error');
+        }
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${userIds.length} user(s)? This action cannot be undone.`)) {
+        if (window.webApp) {
+            userIds.forEach(userId => {
+                // Don't allow deleting the main admin user
+                if (userId == 1) {
+                    window.webApp.showNotification('Cannot delete the main admin user', 'error');
+                    return;
+                }
+                
+                // Remove from users array
+                if (window.webApp.data.users) {
+                    window.webApp.data.users = window.webApp.data.users.filter(u => u.id != userId);
+                }
+                
+                // Remove from registeredUsers array
+                if (window.webApp.data.registeredUsers) {
+                    window.webApp.data.registeredUsers = window.webApp.data.registeredUsers.filter(u => u.id != userId);
+                }
+            });
+            
+            window.webApp.saveDataToJSON();
+            window.webApp.showNotification(`${userIds.length} user(s) deleted successfully`, 'success');
+            window.webApp.loadUsersTable();
+        }
+    }
+};
