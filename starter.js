@@ -6,7 +6,7 @@ class WebApp {
         this.data = null;
         this.currentPage = 'home';
         this.currentUser = null;
-        this.currentLanguage = 'ar'; // Default to Arabic
+        this.currentLanguage = 'ar'; // Arabic only
         this.init();
     }
 
@@ -20,7 +20,6 @@ class WebApp {
             this.setupMobileMenu();
             this.setupAuthentication();
             this.setupEditProfile();
-            this.setupLanguageSwitcher();
             this.checkAuthStatus();
             console.log('Web application initialized successfully');
         } catch (error) {
@@ -32,15 +31,7 @@ class WebApp {
     // Load data from JSON file
     async loadData() {
         try {
-            // Try to load from localStorage first (for offline/local use)
-            const savedData = localStorage.getItem('appData');
-            if (savedData) {
-                this.data = JSON.parse(savedData);
-                console.log('Data loaded from localStorage:', this.data);
-                return;
-            }
-
-            // Try to fetch from server
+            // Always try to load fresh data from JSON file first
             try {
                 const response = await fetch('data.json');
                 if (response.ok) {
@@ -51,8 +42,17 @@ class WebApp {
                     return;
                 }
             } catch (fetchError) {
-                console.log('Fetch failed, using embedded data:', fetchError.message);
+                console.log('Fetch failed, trying localStorage:', fetchError.message);
             }
+
+            // Try to load from localStorage as fallback
+            const savedData = localStorage.getItem('appData');
+            if (savedData) {
+                this.data = JSON.parse(savedData);
+                console.log('Data loaded from localStorage:', this.data);
+                return;
+            }
+
 
             // Use embedded data as fallback (eliminates CORS issues)
             this.data = this.getEmbeddedData();
@@ -341,6 +341,10 @@ class WebApp {
 
     // Show page with smooth transition
     showPage(pageId, updateHistory = true) {
+        console.log('=== SHOW PAGE DEBUG ===');
+        console.log('Showing page:', pageId);
+        console.log('Current page before:', this.currentPage);
+        
         // Hide all pages
         document.querySelectorAll('.page').forEach(page => {
             page.classList.remove('active');
@@ -351,6 +355,9 @@ class WebApp {
         if (targetPage) {
             targetPage.classList.add('active');
             this.currentPage = pageId;
+            console.log('Page shown successfully:', pageId);
+        } else {
+            console.error('Page not found:', pageId);
         }
 
         // Update navigation
@@ -425,6 +432,8 @@ class WebApp {
         
         // Show appropriate dashboard based on user role
         if (this.currentUser.role === 'client') {
+            console.log('Showing client dashboard for client user');
+            this.showClientDashboard();
             
             // Add some test engineers if none exist
             if (!this.data.registeredUsers || this.data.registeredUsers.filter(u => u.role === 'engineer').length === 0) {
@@ -434,6 +443,9 @@ class WebApp {
         } else if (this.currentUser.role === 'engineer') {
             console.log('Showing engineer dashboard for engineer user');
             this.showEngineerDashboard();
+        } else if (this.currentUser.role === 'admin') {
+            console.log('Showing admin dashboard for admin user');
+            this.showAdminDashboard();
         } else {
             console.log('Unknown user role:', this.currentUser.role);
         }
@@ -1221,7 +1233,21 @@ class WebApp {
         this.currentUser = user;
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.updateAuthUI();
-        this.showPage('dashboard');
+        
+        // Redirect to appropriate dashboard based on user role
+        if (user.role === 'admin') {
+            this.showPage('dashboard');
+            this.showAdminDashboard();
+        } else if (user.role === 'engineer') {
+            this.showPage('dashboard');
+            this.showEngineerDashboard();
+        } else if (user.role === 'client') {
+            this.showPage('dashboard');
+            this.showClientDashboard();
+        } else {
+            // Fallback to general dashboard
+            this.showPage('dashboard');
+        }
     }
 
     // Logout user
@@ -1360,17 +1386,28 @@ class WebApp {
     // Show client dashboard
     showClientDashboard() {
         console.log('=== SHOW CLIENT DASHBOARD ===');
+        console.log('Current page:', this.currentPage);
         
         // Hide engineer dashboard first
         const engineerDashboard = document.getElementById('engineer-dashboard');
         if (engineerDashboard) {
             engineerDashboard.style.display = 'none';
+            console.log('Engineer dashboard hidden');
+        }
+        
+        // Hide admin dashboard
+        const adminDashboard = document.getElementById('admin-dashboard');
+        if (adminDashboard) {
+            adminDashboard.style.display = 'none';
+            console.log('Admin dashboard hidden');
         }
         
         const clientDashboard = document.getElementById('client-dashboard');
         if (clientDashboard) {
             clientDashboard.style.display = 'block';
             console.log('Client dashboard displayed');
+        } else {
+            console.error('Client dashboard element not found');
         }
         
         // Update user info in client dashboard
@@ -1423,14 +1460,30 @@ class WebApp {
 
     // Show engineer dashboard
     showEngineerDashboard() {
+        console.log('=== SHOW ENGINEER DASHBOARD ===');
+        console.log('Current page:', this.currentPage);
+        
         // Hide client dashboard first
         const clientDashboard = document.getElementById('client-dashboard');
         if (clientDashboard) {
             clientDashboard.style.display = 'none';
+            console.log('Client dashboard hidden');
+        }
+        
+        // Hide admin dashboard
+        const adminDashboard = document.getElementById('admin-dashboard');
+        if (adminDashboard) {
+            adminDashboard.style.display = 'none';
+            console.log('Admin dashboard hidden');
         }
         
         const engineerDashboard = document.getElementById('engineer-dashboard');
-        engineerDashboard.style.display = 'block';
+        if (engineerDashboard) {
+            engineerDashboard.style.display = 'block';
+            console.log('Engineer dashboard displayed');
+        } else {
+            console.error('Engineer dashboard element not found');
+        }
         
         // Show edit button for engineers
         const editBtn = document.getElementById('edit-profile-btn');
@@ -1971,20 +2024,15 @@ class WebApp {
         console.log('Current user:', this.currentUser);
         console.log('Current user role:', this.currentUser?.role);
         
-        const modal = document.getElementById('project-form-modal');
-        console.log('Project form modal element found:', !!modal);
-        
-        if (modal) {
-            modal.style.display = 'flex';
-            console.log('Project form modal displayed');
+        if (this.currentUser && this.currentUser.role === 'client') {
+            showModal('project-form-modal');
         } else {
-            console.error('Project form modal element not found');
+            this.showError('يجب تسجيل الدخول كعميل لإنشاء مشروع');
         }
     }
 
     closeProjectForm() {
-        const modal = document.getElementById('project-form-modal');
-        modal.style.display = 'none';
+        closeModal('project-form-modal');
         // Reset form
         document.getElementById('building-project-form').reset();
     }
@@ -3613,13 +3661,20 @@ class WebApp {
     // Admin Dashboard
     showAdminDashboard() {
         console.log('=== SHOW ADMIN DASHBOARD ===');
+        console.log('Current page:', this.currentPage);
         
         // Hide other dashboards
         const clientDashboard = document.getElementById('client-dashboard');
         const engineerDashboard = document.getElementById('engineer-dashboard');
         
-        if (clientDashboard) clientDashboard.style.display = 'none';
-        if (engineerDashboard) engineerDashboard.style.display = 'none';
+        if (clientDashboard) {
+            clientDashboard.style.display = 'none';
+            console.log('Client dashboard hidden');
+        }
+        if (engineerDashboard) {
+            engineerDashboard.style.display = 'none';
+            console.log('Engineer dashboard hidden');
+        }
         
         // Show admin dashboard
         const adminDashboard = document.getElementById('admin-dashboard');
@@ -4461,152 +4516,11 @@ class WebApp {
         }
     }
 
-    // Language Switcher Setup
-    setupLanguageSwitcher() {
-        // Load saved language preference
-        const savedLang = localStorage.getItem('appLanguage');
-        if (savedLang) {
-            this.currentLanguage = savedLang;
-        }
-        
-        // Apply initial language
-        this.applyLanguage(this.currentLanguage);
-        
-        // Update language switcher button
-        this.updateLanguageSwitcher();
-    }
 
-    // Toggle between Arabic and English
-    toggleLanguage() {
-        this.currentLanguage = this.currentLanguage === 'ar' ? 'en' : 'ar';
-        
-        this.applyLanguage(this.currentLanguage);
-        this.updateLanguageSwitcher();
-        
-        // Save language preference
-        localStorage.setItem('appLanguage', this.currentLanguage);
-        
-        // Show success message using translations
-        const translations = this.data?.translations?.[this.currentLanguage];
-        const message = translations?.messages?.languageChanged || 
-                      (this.currentLanguage === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language changed to English');
-        this.showSuccess(message);
-    }
 
-    // Apply language to the interface
-    applyLanguage(language) {
-        const html = document.documentElement;
-        const body = document.body;
-        
-        if (language === 'ar') {
-            html.setAttribute('lang', 'ar');
-            html.setAttribute('dir', 'rtl');
-            body.classList.add('arabic-text');
-            body.classList.remove('english-text');
-        } else {
-            html.setAttribute('lang', 'en');
-            html.setAttribute('dir', 'ltr');
-            body.classList.add('english-text');
-            body.classList.remove('arabic-text');
-        }
-        
-        // Update navigation text
-        this.updateNavigationText(language);
-        
-        // Update page content
-        this.updatePageContent(language);
-    }
 
     // Update navigation text based on language
-    updateNavigationText(language) {
-        const translations = this.data?.translations?.[language];
-        if (!translations) return;
-        
-        const navTexts = document.querySelectorAll('.nav-text');
-        const dropdownTexts = document.querySelectorAll('.dropdown-text');
-        
-        // Update navigation items
-        const navItems = [
-            { selector: '[data-page="home"] .nav-text', key: 'home' },
-            { selector: '[data-page="about"] .nav-text', key: 'about' },
-            { selector: '[data-page="blog"] .nav-text', key: 'blog' },
-            { selector: '[data-page="contact"] .nav-text', key: 'contact' },
-            { selector: '[data-page="login"] .nav-text', key: 'login' }
-        ];
-        
-        navItems.forEach(item => {
-            const element = document.querySelector(item.selector);
-            if (element && translations.navigation[item.key]) {
-                element.textContent = translations.navigation[item.key];
-            }
-        });
-        
-        // Update dropdown items
-        const dropdownItems = [
-            { selector: '.nav-dropdown-item[onclick="goToDashboard()"] .dropdown-text', key: 'dashboard' },
-            { selector: '.nav-dropdown-item[onclick="goToProfile()"] .dropdown-text', key: 'profile' },
-            { selector: '.nav-dropdown-item[onclick="logout()"] .dropdown-text', key: 'logout' }
-        ];
-        
-        dropdownItems.forEach(item => {
-            const element = document.querySelector(item.selector);
-            if (element && translations.navigation[item.key]) {
-                element.textContent = translations.navigation[item.key];
-            }
-        });
-    }
 
-    // Update page content based on language
-    updatePageContent(language) {
-        const translations = this.data?.translations?.[language];
-        if (!translations) return;
-        
-        // Update site title
-        const siteTitle = document.querySelector('.site-title');
-        if (siteTitle && translations.site?.title) {
-            siteTitle.textContent = translations.site.title;
-        }
-        
-        // Update page titles and content
-        this.updatePageTitles(language);
-        
-        // Update all form labels and placeholders
-        this.updateFormElements(language);
-        
-        // Update all alt texts
-        this.updateAltTexts(language);
-        
-        // Update all help texts
-        this.updateHelpTexts(language);
-        
-        // Update all elements with data-translate attributes
-        this.updateDataTranslateElements(language);
-    }
-
-    // Update page titles and content
-    updatePageTitles(language) {
-        const translations = this.data?.translations?.[language];
-        if (!translations) return;
-        
-        // Update page titles
-        const pageTitles = document.querySelectorAll('.page-title');
-        pageTitles.forEach(title => {
-            const pageId = title.closest('.page')?.id;
-            if (pageId && translations.navigation[pageId]) {
-                title.textContent = translations.navigation[pageId];
-            }
-        });
-    }
-
-    // Update language switcher button
-    updateLanguageSwitcher() {
-        const langBtn = document.getElementById('current-lang');
-        if (langBtn) {
-            const translations = this.data?.translations?.[this.currentLanguage];
-            langBtn.textContent = translations?.site?.currentLanguage || 
-                                (this.currentLanguage === 'ar' ? 'العربية' : 'English');
-        }
-    }
 
     // Update form elements (labels, placeholders, help text)
     updateFormElements(language) {
@@ -5695,7 +5609,7 @@ class WebApp {
         document.getElementById('user-form').reset();
         document.getElementById('user-id').value = '';
         document.getElementById('engineer-fields').style.display = 'none';
-        document.getElementById('user-modal').style.display = 'flex';
+        showModal('user-modal');
     }
     
     editUser(userId) {
@@ -5723,7 +5637,7 @@ class WebApp {
             document.getElementById('engineer-fields').style.display = 'none';
         }
         
-        document.getElementById('user-modal').style.display = 'flex';
+        showModal('user-modal');
     }
     
     viewUser(userId) {
@@ -5802,7 +5716,7 @@ class WebApp {
         `;
         
         document.getElementById('user-details-content').innerHTML = userDetails;
-        document.getElementById('view-user-modal').style.display = 'flex';
+        showModal('view-user-modal');
     }
     
     deleteUser(userId) {
@@ -5841,7 +5755,7 @@ class WebApp {
         `;
         
         document.getElementById('delete-user-info').innerHTML = userInfo;
-        document.getElementById('delete-user-modal').style.display = 'flex';
+        showModal('delete-user-modal');
         
         // Store the user ID for deletion
         this.userToDelete = userId;
@@ -5972,17 +5886,17 @@ class WebApp {
     }
     
     closeUserModal() {
-        document.getElementById('user-modal').style.display = 'none';
+        closeModal('user-modal');
         document.getElementById('user-form').reset();
     }
     
     closeDeleteUserModal() {
-        document.getElementById('delete-user-modal').style.display = 'none';
+        closeModal('delete-user-modal');
         this.userToDelete = null;
     }
     
     closeViewUserModal() {
-        document.getElementById('view-user-modal').style.display = 'none';
+        closeModal('view-user-modal');
     }
 }
 
@@ -6001,16 +5915,158 @@ window.showPage = function(pageId) {
 };
 
 // Global language toggle function
-window.toggleLanguage = function() {
-    if (window.webApp) {
-        window.webApp.toggleLanguage();
-    }
-};
 
 // Global showLogin function
 window.showLogin = function() {
     if (window.webApp) {
         window.webApp.showPage('login');
+    }
+};
+
+// Global function to clear localStorage and reload data
+window.clearCacheAndReload = function() {
+    localStorage.removeItem('appData');
+    localStorage.removeItem('registeredUsers');
+    localStorage.removeItem('currentUser');
+    if (window.webApp) {
+        window.webApp.loadData();
+        console.log('Cache cleared and data reloaded');
+    }
+};
+
+// Modal backdrop management
+window.createModalBackdrop = function() {
+    let backdrop = document.getElementById('modal-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'modal-backdrop';
+        backdrop.className = 'modal-backdrop';
+        document.body.appendChild(backdrop);
+    }
+    return backdrop;
+};
+
+window.showModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Create and show backdrop
+        const backdrop = createModalBackdrop();
+        backdrop.classList.add('active');
+        
+        // Show modal
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+        
+        // Lock body scroll
+        document.body.classList.add('modal-open');
+        
+        // Add click outside to close
+        backdrop.onclick = function() {
+            closeModal(modalId);
+        };
+    }
+};
+
+window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Hide modal
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        
+        // Hide backdrop
+        const backdrop = document.getElementById('modal-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('active');
+        }
+        
+        // Unlock body scroll
+        document.body.classList.remove('modal-open');
+    }
+};
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            closeModal(activeModal.id);
+        }
+    }
+});
+
+// Update last updated time in admin control panel
+window.updateLastUpdatedTime = function() {
+    const timeElement = document.getElementById('last-updated-time');
+    if (timeElement) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ar-SA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        timeElement.textContent = timeString;
+    }
+};
+
+// Enhanced mock data generation with feedback
+window.generateMockData = function() {
+    if (window.webApp) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري الإنشاء...';
+        button.disabled = true;
+        
+        // Generate mock data using the internal function
+        const success = generateMockDataInternal();
+        
+        // Update last updated time
+        updateLastUpdatedTime();
+        
+        // Show appropriate message
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            if (success) {
+                window.webApp.showSuccess('تم إنشاء البيانات التجريبية بنجاح!\n\nتم إضافة:\n- 5 مهندسين\n- 3 عملاء\n- 3 مشاريع');
+                // Refresh the admin dashboard to show new data
+                if (window.webApp.currentUser && window.webApp.currentUser.role === 'admin') {
+                    window.webApp.loadAdminData();
+                }
+            } else {
+                window.webApp.showError('فشل في إنشاء البيانات التجريبية. تأكد من تسجيل الدخول كمدير.');
+            }
+        }, 1000);
+    }
+};
+
+// Enhanced cache clear and reload with feedback
+window.clearCacheAndReload = function() {
+    if (window.webApp) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري التحديث...';
+        button.disabled = true;
+        
+        // Clear cache and reload
+        localStorage.removeItem('appData');
+        localStorage.removeItem('registeredUsers');
+        localStorage.removeItem('currentUser');
+        window.webApp.loadData();
+        
+        // Update last updated time
+        updateLastUpdatedTime();
+        
+        // Show success message
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            window.webApp.showSuccess('تم تحديث البيانات بنجاح!');
+        }, 1000);
     }
 };
 
@@ -6808,9 +6864,19 @@ window.goToDashboard = function() {
         // Close dropdown
         window.toggleUserDropdown();
         
-        // Navigate to dashboard
+        // Navigate to appropriate dashboard based on user role
+        const user = window.webApp.currentUser;
         window.webApp.showPage('dashboard');
-        window.webApp.updateDashboard();
+        
+        if (user.role === 'admin') {
+            window.webApp.showAdminDashboard();
+        } else if (user.role === 'engineer') {
+            window.webApp.showEngineerDashboard();
+        } else if (user.role === 'client') {
+            window.webApp.showClientDashboard();
+        } else {
+            window.webApp.updateDashboard();
+        }
     }
 };
 
@@ -6819,15 +6885,14 @@ window.goToProfile = function() {
         // Close dropdown
         window.toggleUserDropdown();
         
-        // Navigate to appropriate profile based on role
+        // Navigate to dashboard and show appropriate profile based on role
+        window.webApp.showPage('dashboard');
+        
         if (window.webApp.currentUser.role === 'engineer') {
-            window.webApp.showPage('engineer-dashboard');
             window.webApp.showEngineerDashboard();
         } else if (window.webApp.currentUser.role === 'client') {
-            window.webApp.showPage('client-dashboard');
             window.webApp.showClientDashboard();
         } else if (window.webApp.currentUser.role === 'admin') {
-            window.webApp.showPage('admin-dashboard');
             window.webApp.showAdminDashboard();
         }
     }
@@ -7006,3 +7071,482 @@ window.bulkDeleteUsers = function() {
         }
     }
 };
+
+// Building Documentation Questions Functions
+window.toggleDocumentUpload = function(questionType, value) {
+    const uploadDiv = document.getElementById(`${questionType}-upload`);
+    const fileInput = document.getElementById(`${questionType}-file`);
+    const previewDiv = document.getElementById(`${questionType}-preview`);
+    
+    if (value === 'yes') {
+        uploadDiv.classList.remove('hidden');
+        uploadDiv.classList.add('block');
+        fileInput.required = true;
+    } else {
+        uploadDiv.classList.add('hidden');
+        uploadDiv.classList.remove('block');
+        fileInput.required = false;
+        fileInput.value = '';
+        if (previewDiv) {
+            previewDiv.innerHTML = '';
+        }
+    }
+};
+
+// File upload preview functionality
+window.setupFileUploadPreviews = function() {
+    const fileInputs = document.querySelectorAll('input[type="file"][name*="File"]');
+    
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const previewDiv = document.getElementById(e.target.name.replace('File', 'preview'));
+            
+            if (previewDiv) {
+                previewDiv.innerHTML = '';
+                
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'relative bg-white rounded-lg p-3 border border-gray-200 shadow-sm text-center';
+                    
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.alt = file.name;
+                        img.className = 'w-full h-20 object-cover rounded-lg mb-2';
+                        fileItem.appendChild(img);
+                    } else {
+                        const icon = document.createElement('i');
+                        icon.className = 'fas fa-file-pdf text-red-500 text-3xl mb-2';
+                        fileItem.appendChild(icon);
+                    }
+                    
+                    const fileName = document.createElement('div');
+                    fileName.className = 'text-xs text-gray-600 truncate mb-2';
+                    fileName.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+                    fileItem.appendChild(fileName);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors flex items-center justify-center';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = function() {
+                        removeFileFromInput(input, index);
+                        fileItem.remove();
+                    };
+                    fileItem.appendChild(removeBtn);
+                    
+                    previewDiv.appendChild(fileItem);
+                });
+            }
+        });
+    });
+};
+
+window.removeFileFromInput = function(input, indexToRemove) {
+    const dt = new DataTransfer();
+    const files = Array.from(input.files);
+    
+    files.forEach((file, index) => {
+        if (index !== indexToRemove) {
+            dt.items.add(file);
+        }
+    });
+    
+    input.files = dt.files;
+};
+
+// Initialize file upload previews when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setupFileUploadPreviews();
+});
+
+// Re-setup file upload previews when project form modal is opened
+window.openProjectForm = function() {
+    // Show the modal
+    const modal = document.getElementById('project-form-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        // Add smooth animation
+        setTimeout(() => {
+            modal.querySelector('.bg-white').style.transform = 'scale(1)';
+        }, 10);
+    }
+    
+    // Setup file upload previews for the new form
+    setTimeout(() => {
+        setupFileUploadPreviews();
+    }, 100);
+};
+
+// Close project form modal
+window.closeProjectForm = function() {
+    const modal = document.getElementById('project-form-modal');
+    if (modal) {
+        const modalContent = modal.querySelector('.bg-white');
+        if (modalContent) {
+            modalContent.style.transform = 'scale(0.95)';
+        }
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
+    }
+};
+
+// Store the original openProjectForm function if it exists
+if (window.openProjectForm) {
+    window.originalOpenProjectForm = window.openProjectForm;
+}
+
+// Function to toggle admin debug buttons visibility
+window.toggleAdminDebugButtons = function() {
+    const adminDebugSection = document.getElementById('admin-debug-buttons');
+    if (adminDebugSection) {
+        const currentUser = window.webApp?.getCurrentUser();
+        if (currentUser && currentUser.role === 'admin') {
+            adminDebugSection.style.display = 'block';
+        } else {
+            adminDebugSection.style.display = 'none';
+        }
+    }
+};
+
+// Override the login function to check admin status
+window.originalLogin = window.login;
+window.login = function() {
+    // Call the original login function
+    if (window.originalLogin) {
+        window.originalLogin();
+    }
+    
+    // Check admin status after login
+    setTimeout(() => {
+        toggleAdminDebugButtons();
+    }, 200);
+};
+
+// Call this function when dashboard is shown
+// Note: showClientDashboard is already defined as a method in the WebApp class
+
+// Expandable sections function for home page
+function toggleExpandableSection(sectionName) {
+    const content = document.getElementById(sectionName + '-content');
+    const arrow = document.getElementById(sectionName + '-arrow');
+    
+    if (content && arrow) {
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            content.classList.add('hidden');
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+}
+
+// Mock Data Generator for Project Presentation
+function generateMockDataInternal() {
+
+    const mockData = {
+        engineers: [
+            {
+                id: 1,
+                username: "ahmed_engineer",
+                email: "ahmed.engineer@example.com",
+                password: "password123",
+                role: "engineer",
+                firstName: "أحمد",
+                lastName: "المعمار",
+                phone: "+966501234567",
+                city: "الرياض",
+                experience: 8,
+                skills: ["التصميم المعماري", "الرسم الهندسي", "إدارة المشاريع", "AutoCAD", "Revit"],
+                bio: "مهندس معماري محترف مع 8 سنوات من الخبرة في تصميم المباني السكنية والتجارية. متخصص في التصميم المستدام والحديث.",
+                projects: "تصميم 50+ مشروع سكني وتجاري في المملكة العربية السعودية",
+                photo: null,
+                cv: null,
+                createdAt: "2024-01-15T00:00:00Z"
+            },
+            {
+                id: 2,
+                username: "sara_architect",
+                email: "sara.architect@example.com",
+                password: "password123",
+                role: "engineer",
+                firstName: "سارة",
+                lastName: "البناء",
+                phone: "+966502345678",
+                city: "جدة",
+                experience: 12,
+                skills: ["التصميم الداخلي", "التخطيط الحضري", "الاستدامة", "SketchUp", "3D Max"],
+                bio: "مهندسة معمارية متخصصة في التصميم الداخلي والتخطيط الحضري. لديها خبرة واسعة في المشاريع الكبيرة.",
+                projects: "إدارة وتصميم مشاريع حكومية وخاصة بقيمة 100+ مليون ريال",
+                photo: null,
+                cv: null,
+                createdAt: "2024-01-20T00:00:00Z"
+            },
+            {
+                id: 3,
+                username: "mohammed_civil",
+                email: "mohammed.civil@example.com",
+                password: "password123",
+                role: "engineer",
+                firstName: "محمد",
+                lastName: "الهندسة",
+                phone: "+966503456789",
+                city: "الدمام",
+                experience: 15,
+                skills: ["الهندسة المدنية", "البنية التحتية", "إدارة الإنشاءات", "SAP2000", "ETABS"],
+                bio: "مهندس مدني خبير في البنية التحتية والمشاريع الكبيرة. متخصص في الجسور والطرق والأنفاق.",
+                projects: "تصميم وتنفيذ 30+ مشروع بنية تحتية في المنطقة الشرقية",
+                photo: null,
+                cv: null,
+                createdAt: "2024-01-25T00:00:00Z"
+            },
+            {
+                id: 4,
+                username: "fatima_design",
+                email: "fatima.design@example.com",
+                password: "password123",
+                role: "engineer",
+                firstName: "فاطمة",
+                lastName: "التصميم",
+                phone: "+966504567890",
+                city: "مكة المكرمة",
+                experience: 6,
+                skills: ["التصميم المعماري", "الرسم الفني", "التصميم الرقمي", "AutoCAD", "Photoshop"],
+                bio: "مهندسة معمارية شابة متخصصة في التصميم الحديث والمبتكر. لديها رؤية إبداعية في التصميم.",
+                projects: "تصميم 25+ فيلا ومنزل سكني بتصاميم عصرية ومبتكرة",
+                photo: null,
+                cv: null,
+                createdAt: "2024-02-01T00:00:00Z"
+            },
+            {
+                id: 5,
+                username: "khalid_construction",
+                email: "khalid.construction@example.com",
+                password: "password123",
+                role: "engineer",
+                firstName: "خالد",
+                lastName: "الإنشاءات",
+                phone: "+966505678901",
+                city: "المدينة المنورة",
+                experience: 20,
+                skills: ["إدارة الإنشاءات", "التخطيط", "مراقبة الجودة", "Primavera", "MS Project"],
+                bio: "مهندس إنشاءات مخضرم مع 20 سنة من الخبرة في إدارة المشاريع الكبيرة والمعقدة.",
+                projects: "إدارة 100+ مشروع إنشائي بقيمة إجمالية 500+ مليون ريال",
+                photo: null,
+                cv: null,
+                createdAt: "2024-02-05T00:00:00Z"
+            }
+        ],
+        clients: [
+            {
+                id: 1,
+                username: "omar_client",
+                email: "omar.client@example.com",
+                password: "password123",
+                role: "client",
+                firstName: "عمر",
+                lastName: "العميل",
+                phone: "+966506789012",
+                city: "الرياض",
+                company: "شركة عمر التجارية",
+                createdAt: "2024-01-10T00:00:00Z"
+            },
+            {
+                id: 2,
+                username: "nora_client",
+                email: "nora.client@example.com",
+                password: "password123",
+                role: "client",
+                firstName: "نورا",
+                lastName: "الاستثمار",
+                phone: "+966507890123",
+                city: "جدة",
+                company: "مجموعة نورا الاستثمارية",
+                createdAt: "2024-01-12T00:00:00Z"
+            },
+            {
+                id: 3,
+                username: "saud_client",
+                email: "saud.client@example.com",
+                password: "password123",
+                role: "client",
+                firstName: "سعود",
+                lastName: "العقار",
+                phone: "+966508901234",
+                city: "الدمام",
+                company: "شركة سعود العقارية",
+                createdAt: "2024-01-18T00:00:00Z"
+            }
+        ],
+        projects: [
+            {
+                id: 1,
+                clientId: 1,
+                engineerId: 1,
+                title: "فيلا عائلية حديثة",
+                description: "تصميم فيلا عائلية حديثة بمساحة 400 متر مربع مع حديقة وموقف سيارات",
+                address: "حي النرجس، الرياض",
+                buildingType: "فيلا",
+                buildingSize: 400,
+                lotSize: 600,
+                floorsCount: 2,
+                bedroomsCount: 4,
+                bathroomsCount: 3,
+                parkingSpaces: 2,
+                budget: 800000,
+                timeline: "6-12 شهر",
+                startDate: "2024-03-01",
+                status: "active",
+                createdAt: "2024-02-01T00:00:00Z",
+                steps: [
+                    {
+                        id: 1,
+                        title: "التصميم الأولي",
+                        description: "إنشاء التصميم الأولي والرسومات الأساسية",
+                        duration: "2-3 أسابيع",
+                        cost: 50000,
+                        status: "completed",
+                        images: []
+                    },
+                    {
+                        id: 2,
+                        title: "الرسومات التنفيذية",
+                        description: "إعداد الرسومات التنفيذية التفصيلية",
+                        duration: "3-4 أسابيع",
+                        cost: 75000,
+                        status: "in-progress",
+                        images: []
+                    },
+                    {
+                        id: 3,
+                        title: "الحصول على التراخيص",
+                        description: "إعداد الملفات المطلوبة للحصول على تراخيص البناء",
+                        duration: "4-6 أسابيع",
+                        cost: 25000,
+                        status: "pending",
+                        images: []
+                    }
+                ]
+            },
+            {
+                id: 2,
+                clientId: 2,
+                engineerId: 2,
+                title: "مبنى سكني متعدد الطوابق",
+                description: "تصميم مبنى سكني من 8 طوابق مع 24 شقة سكنية",
+                address: "شارع التحلية، جدة",
+                buildingType: "مبنى سكني",
+                buildingSize: 2000,
+                lotSize: 800,
+                floorsCount: 8,
+                bedroomsCount: 24,
+                bathroomsCount: 24,
+                parkingSpaces: 30,
+                budget: 15000000,
+                timeline: "1-2 سنة",
+                startDate: "2024-04-01",
+                status: "active",
+                createdAt: "2024-02-05T00:00:00Z",
+                steps: [
+                    {
+                        id: 1,
+                        title: "الدراسة الأولية",
+                        description: "دراسة الموقع والتحليل المعماري الأولي",
+                        duration: "1-2 أسابيع",
+                        cost: 100000,
+                        status: "completed",
+                        images: []
+                    },
+                    {
+                        id: 2,
+                        title: "التصميم المعماري",
+                        description: "تصميم الواجهات والتوزيعات الداخلية",
+                        duration: "6-8 أسابيع",
+                        cost: 300000,
+                        status: "in-progress",
+                        images: []
+                    }
+                ]
+            },
+            {
+                id: 3,
+                clientId: 3,
+                engineerId: 3,
+                title: "مستودع تجاري",
+                description: "تصميم مستودع تجاري بمساحة 1500 متر مربع مع مرافق التخزين",
+                address: "المنطقة الصناعية الثانية، الدمام",
+                buildingType: "مستودع",
+                buildingSize: 1500,
+                lotSize: 2000,
+                floorsCount: 1,
+                bedroomsCount: 0,
+                bathroomsCount: 2,
+                parkingSpaces: 10,
+                budget: 2000000,
+                timeline: "3-6 أشهر",
+                startDate: "2024-05-01",
+                status: "pending",
+                createdAt: "2024-02-10T00:00:00Z",
+                steps: [
+                    {
+                        id: 1,
+                        title: "التصميم الإنشائي",
+                        description: "تصميم الهيكل الإنشائي للمستودع",
+                        duration: "3-4 أسابيع",
+                        cost: 150000,
+                        status: "pending",
+                        images: []
+                    }
+                ]
+            }
+        ]
+    };
+
+    // Add mock data to existing data
+    if (window.webApp && window.webApp.data) {
+        // Add engineers
+        if (!window.webApp.data.registeredUsers) {
+            window.webApp.data.registeredUsers = [];
+        }
+        
+        // Add mock engineers
+        mockData.engineers.forEach(engineer => {
+            if (!window.webApp.data.registeredUsers.find(u => u.id === engineer.id)) {
+                window.webApp.data.registeredUsers.push(engineer);
+            }
+        });
+
+        // Add mock clients
+        mockData.clients.forEach(client => {
+            if (!window.webApp.data.registeredUsers.find(u => u.id === client.id)) {
+                window.webApp.data.registeredUsers.push(client);
+            }
+        });
+
+        // Add mock projects
+        if (!window.webApp.data.projects) {
+            window.webApp.data.projects = [];
+        }
+        
+        mockData.projects.forEach(project => {
+            if (!window.webApp.data.projects.find(p => p.id === project.id)) {
+                window.webApp.data.projects.push(project);
+            }
+        });
+
+        // Save to localStorage
+        localStorage.setItem('appData', JSON.stringify(window.webApp.data));
+        
+        // Update the webApp data
+        window.webApp.data = window.webApp.data;
+        
+        return true; // Success
+    } else {
+        console.error('خطأ: لا يمكن الوصول إلى البيانات. تأكد من تسجيل الدخول كمدير.');
+        return false; // Error
+    }
+}

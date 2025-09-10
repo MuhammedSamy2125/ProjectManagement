@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="تطبيق ويب حديث مع قاعدة بيانات JSON - Building Web Project">
-    <meta name="keywords" content="تطبيق ويب, JSON, حديث, متجاوب, السعودية, web application, JSON, modern, responsive, Saudi Arabia">
-    <meta name="author" content="Building Web Project - مشروع بناء الويب">
+    <meta name="description" content="تطبيق ويب حديث مع قاعدة بيانات JSON">
+    <meta name="keywords" content="تطبيق ويب, JSON, حديث, متجاوب, السعودية">
+    <meta name="author" content="مشروع بناء الويب">
     
-    <title data-translate="site.title">مشروع بناء الويب - Building Web Project</title>
+    <title data-translate="site.title">مشروع بناء الويب</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="Images/favicon.ico">
@@ -25,8 +25,81 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;200;300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Smooth Scrolling -->
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Modal Background Effects */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Enhanced modal styling */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.9);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        /* Body scroll lock when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+    
 </head>
-<body>
+<body class="overflow-x-hidden">
     <!-- Header -->
     <header class="header">
         <nav class="navbar">
@@ -35,13 +108,6 @@
                     <h1 class="site-title" data-translate="site.title">مشروع بناء الويب</h1>
                 </div>
                 
-                <!-- Language Switcher -->
-                <div class="language-switcher">
-                    <button id="lang-switcher" class="lang-btn" onclick="toggleLanguage()">
-                        <i class="fas fa-globe"></i>
-                        <span id="current-lang" data-translate="site.currentLanguage">العربية</span>
-                    </button>
-                </div>
                 
                 <div class="nav-menu" id="nav-menu">
                     <ul class="nav-list">
@@ -73,25 +139,25 @@
                         <li class="nav-item" id="user-nav-profile" style="display: none;">
                             <div class="nav-user-profile" id="user-profile-dropdown">
                                 <div class="nav-user-info" onclick="toggleUserDropdown()">
-                                    <img id="nav-user-photo" class="nav-user-photo" style="display: none;" alt="User Photo">
+                                    <img id="nav-user-photo" class="nav-user-photo" style="display: none;" alt="صورة المستخدم">
                                     <div id="nav-default-photo" class="nav-user-photo-default">
                                         <i class="fas fa-user"></i>
                                     </div>
-                                    <span id="nav-username" class="nav-username" data-translate="forms.username">User</span>
+                                    <span id="nav-username" class="nav-username">المستخدم</span>
                                     <i class="fas fa-chevron-down nav-dropdown-arrow"></i>
                                 </div>
                                 <div class="nav-user-dropdown" id="user-dropdown-menu" style="display: none;">
                                     <div class="nav-dropdown-header">
                                         <div class="nav-dropdown-user-info">
                                             <div class="nav-dropdown-avatar">
-                                                <img id="nav-dropdown-photo" class="nav-dropdown-photo" style="display: none;" alt="User Photo">
+                                                <img id="nav-dropdown-photo" class="nav-dropdown-photo" style="display: none;" alt="صورة المستخدم">
                                                 <div id="nav-dropdown-default-photo" class="nav-dropdown-photo-default">
                                                     <i class="fas fa-user"></i>
                                                 </div>
                                             </div>
                                             <div class="nav-dropdown-details">
-                                                <div id="nav-dropdown-username" class="nav-dropdown-name" data-translate="forms.username">User</div>
-                                                <div id="nav-dropdown-role" class="nav-dropdown-role" data-translate="forms.role">Role</div>
+                                                <div id="nav-dropdown-username" class="nav-dropdown-name">المستخدم</div>
+                                                <div id="nav-dropdown-role" class="nav-dropdown-role">الدور</div>
                                             </div>
                                         </div>
                                     </div>
@@ -129,90 +195,246 @@
     <!-- Main Content -->
     <main class="main-content">
         <!-- Home Page -->
-        <section id="home" class="page active">
-            <!-- Hero Section -->
-            <div class="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white py-12 md:py-20 lg:py-24 overflow-hidden">
+        <section id="home" class="page active h-screen overflow-hidden">
+            <!-- Main Dashboard Container -->
+            <div class="h-full flex flex-col">
+                <!-- Header Section - Compact -->
+                <div class="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white py-3 md:py-4 overflow-hidden flex-shrink-0">
                 <!-- Animated Background Elements -->
                 <div class="absolute inset-0">
-                    <div class="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 animate-pulse"></div>
-                    <div class="absolute top-32 right-20 w-16 h-16 bg-purple-500 rounded-full opacity-30 animate-bounce"></div>
-                    <div class="absolute bottom-20 left-1/4 w-12 h-12 bg-indigo-500 rounded-full opacity-25 animate-ping"></div>
-                    <div class="absolute top-1/2 right-10 w-8 h-8 bg-pink-500 rounded-full opacity-20 animate-pulse"></div>
-                    <div class="absolute bottom-32 right-1/3 w-14 h-14 bg-cyan-500 rounded-full opacity-30 animate-bounce"></div>
+                    <div class="absolute top-4 left-4 w-6 h-6 bg-blue-500 rounded-full opacity-20 animate-pulse"></div>
+                    <div class="absolute top-8 right-8 w-4 h-4 bg-purple-500 rounded-full opacity-30 animate-bounce"></div>
+                    <div class="absolute bottom-4 left-1/4 w-3 h-3 bg-indigo-500 rounded-full opacity-25 animate-ping"></div>
                 </div>
                 
-                <!-- Floating Icons -->
-                <div class="absolute inset-0 pointer-events-none">
-                    <i class="fas fa-hammer absolute top-20 left-1/4 text-blue-300 text-2xl opacity-30 animate-float"></i>
-                    <i class="fas fa-building absolute top-40 right-1/4 text-purple-300 text-3xl opacity-25 animate-float-delayed"></i>
-                    <i class="fas fa-tools absolute bottom-40 left-1/3 text-indigo-300 text-xl opacity-30 animate-float"></i>
-                    <i class="fas fa-hard-hat absolute bottom-20 right-1/4 text-cyan-300 text-2xl opacity-25 animate-float-delayed"></i>
-                </div>
-                
-                <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-                    <div class="max-w-5xl mx-auto">
-                        <!-- Logo/Brand Icon -->
-                        <div class="mb-8">
-                            <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl mx-auto flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                                <i class="fas fa-building text-white text-3xl md:text-4xl"></i>
+                <div class="container mx-auto px-4 relative z-10">
+                    <div class="flex items-center justify-between">
+                        <!-- Logo and Title -->
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg flex items-center justify-center shadow-lg">
+                                <i class="fas fa-building text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                    منصة بناء الويب
+                                </h1>
+                                <p class="text-xs text-blue-200">ربط العملاء بالمهندسين الخبراء</p>
                             </div>
                         </div>
                         
-                        <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight">
-                            منصة بناء الويب
-                        </h1>
-                        <p class="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-6 text-blue-100 leading-relaxed font-medium">
-                            ربط العملاء بالمهندسين الخبراء
-                        </p>
-                        <p class="text-base sm:text-lg md:text-xl mb-8 lg:mb-12 text-blue-200 max-w-4xl mx-auto leading-relaxed">
-                            منصة شاملة تربط بين العملاء الذين لديهم مشاريع بناء والمهندسين المهرة. 
-                            من تخطيط المشروع إلى التنفيذ، نحقق أحلام البناء.
-                        </p>
-                        
-                        <!-- Stats Row -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 lg:mb-12 max-w-3xl mx-auto">
-                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
-                                <div class="text-2xl sm:text-3xl font-bold text-white">500+</div>
-                                <div class="text-sm sm:text-base text-blue-200">مهندس</div>
+                        <!-- Quick Stats -->
+                        <div class="hidden md:flex space-x-3 space-x-reverse">
+                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-2 border border-white border-opacity-20">
+                                <div class="text-sm font-bold text-white">500+</div>
+                                <div class="text-xs text-blue-200">مهندس</div>
                             </div>
-                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
-                                <div class="text-2xl sm:text-3xl font-bold text-white">1000+</div>
-                                <div class="text-sm sm:text-base text-blue-200">مشروع</div>
+                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-2 border border-white border-opacity-20">
+                                <div class="text-sm font-bold text-white">1000+</div>
+                                <div class="text-xs text-blue-200">مشروع</div>
                             </div>
-                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
-                                <div class="text-2xl sm:text-3xl font-bold text-white">98%</div>
-                                <div class="text-sm sm:text-base text-blue-200">معدل النجاح</div>
+                            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-2 border border-white border-opacity-20">
+                                <div class="text-sm font-bold text-white">98%</div>
+                                <div class="text-xs text-blue-200">نجاح</div>
                             </div>
                         </div>
                         
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <button class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center" onclick="showLogin()">
-                                <i class="fas fa-rocket ml-2"></i> ابدأ الآن
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2 space-x-reverse">
+                            <button class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center" onclick="showLogin()">
+                                <i class="fas fa-rocket ml-1"></i> ابدأ
                             </button>
-                            <button class="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 flex items-center justify-center" onclick="showPage('about')">
-                                <i class="fas fa-play ml-2"></i> شاهد العرض التوضيحي
+                            <button class="border border-white text-white hover:bg-white hover:text-blue-900 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center" onclick="toggleExpandableSection('features')">
+                                <i class="fas fa-info-circle ml-1"></i> المزيد
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Features Section -->
-            <div class="py-12 md:py-20 lg:py-24 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
-                <!-- Background Pattern -->
-                <div class="absolute inset-0 opacity-5">
-                    <div class="absolute top-0 left-0 w-full h-full" style="background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grid\" width=\"10\" height=\"10\" patternUnits=\"userSpaceOnUse\"><path d=\"M 10 0 L 0 0 0 10\" fill=\"none\" stroke=\"%23000\" stroke-width=\"0.5\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grid)\"/></svg>');"></div>
-                </div>
-                
-                <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div class="text-center mb-12 md:mb-16 lg:mb-20">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-6">
-                            <i class="fas fa-cogs text-white text-2xl"></i>
+            <!-- Main Dashboard Content -->
+            <div class="flex-1 bg-gray-50 overflow-hidden">
+                <div class="h-full flex">
+                    <!-- Left Sidebar - Quick Actions -->
+                    <div class="w-1/4 bg-white border-l border-gray-200 p-4 overflow-y-auto">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">الإجراءات السريعة</h3>
+                        
+                        <!-- Quick Action Buttons -->
+                        <div class="space-y-3">
+                            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg text-sm font-semibold transition-colors flex items-center" onclick="showLogin()">
+                                <i class="fas fa-sign-in-alt ml-2"></i> تسجيل الدخول
+                            </button>
+                            <button class="w-full bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg text-sm font-semibold transition-colors flex items-center" onclick="showPage('about')">
+                                <i class="fas fa-info-circle ml-2"></i> حول المنصة
+                            </button>
+                            <button class="w-full bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg text-sm font-semibold transition-colors flex items-center" onclick="showPage('contact')">
+                                <i class="fas fa-envelope ml-2"></i> اتصل بنا
+                            </button>
                         </div>
-                        <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
+
+                        <!-- User Types -->
+                        <div class="mt-6">
+                            <h4 class="text-md font-semibold text-gray-700 mb-3">أنواع المستخدمين</h4>
+                            <div class="space-y-2">
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user text-blue-500 ml-2"></i>
+                                        <span class="text-sm font-medium text-blue-900">العملاء</span>
+                                    </div>
+                                    <p class="text-xs text-blue-700 mt-1">إدارة المشاريع</p>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-hard-hat text-green-500 ml-2"></i>
+                                        <span class="text-sm font-medium text-green-900">المهندسين</span>
+                                    </div>
+                                    <p class="text-xs text-green-700 mt-1">تنفيذ المشاريع</p>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-cog text-purple-500 ml-2"></i>
+                                        <span class="text-sm font-medium text-purple-900">المديرين</span>
+                                    </div>
+                                    <p class="text-xs text-purple-700 mt-1">إدارة النظام</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area -->
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <!-- How It Works - Compact -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-cogs text-blue-500 ml-2"></i>
+                                كيف يعمل النظام
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i class="fas fa-search text-white"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-900 mb-2">1. استكشف</h3>
+                                    <p class="text-sm text-gray-600">تصفح المهندسين المتاحين</p>
+                                </div>
+                                <div class="text-center p-4 bg-green-50 rounded-lg">
+                                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i class="fas fa-file-alt text-white"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-900 mb-2">2. قدم</h3>
+                                    <p class="text-sm text-gray-600">أرسل طلب مشروعك</p>
+                                </div>
+                                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i class="fas fa-handshake text-white"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-900 mb-2">3. نفذ</h3>
+                                    <p class="text-sm text-gray-600">تابع تقدم المشروع</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Platform Features - Compact -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-star text-yellow-500 ml-2"></i>
+                                ميزات المنصة
+                            </h2>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-users text-blue-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">أدوار متعددة</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-tasks text-green-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">إدارة المشاريع</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-mobile-alt text-purple-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">تصميم متجاوب</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-database text-yellow-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">قاعدة بيانات JSON</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-search text-red-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">بحث ذكي</span>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <i class="fas fa-chart-line text-indigo-500 ml-2"></i>
+                                    <span class="text-sm font-medium text-gray-700">تحليل البيانات</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expandable Sections -->
+                        <div class="space-y-4">
+                            <!-- Blog Section -->
+                            <div class="bg-white rounded-xl shadow-lg">
+                                <button class="w-full p-4 text-right flex items-center justify-between hover:bg-gray-50 transition-colors" onclick="toggleExpandableSection('blog')">
+                                    <i class="fas fa-chevron-down text-gray-400 transform transition-transform" id="blog-arrow"></i>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-blog text-blue-500 ml-2"></i>
+                                        <span class="font-semibold text-gray-900">مقالات المدونة</span>
+                                    </div>
+                                </button>
+                                <div id="blog-content" class="hidden px-4 pb-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                            <h4 class="font-semibold text-gray-900 mb-2">نصائح للبناء</h4>
+                                            <p class="text-sm text-gray-600">أفضل الممارسات في البناء</p>
+                                        </div>
+                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                            <h4 class="font-semibold text-gray-900 mb-2">أدوات حديثة</h4>
+                                            <p class="text-sm text-gray-600">أحدث الأدوات والتقنيات</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Section -->
+                            <div class="bg-white rounded-xl shadow-lg">
+                                <button class="w-full p-4 text-right flex items-center justify-between hover:bg-gray-50 transition-colors" onclick="toggleExpandableSection('contact')">
+                                    <i class="fas fa-chevron-down text-gray-400 transform transition-transform" id="contact-arrow"></i>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-envelope text-green-500 ml-2"></i>
+                                        <span class="font-semibold text-gray-900">معلومات الاتصال</span>
+                                    </div>
+                                </button>
+                                <div id="contact-content" class="hidden px-4 pb-4">
+                                    <div class="space-y-3">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-phone text-blue-500 ml-2"></i>
+                                            <span class="text-sm text-gray-700">+966 50 123 4567</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-envelope text-blue-500 ml-2"></i>
+                                            <span class="text-sm text-gray-700">info@buildingplatform.com</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-map-marker-alt text-blue-500 ml-2"></i>
+                                            <span class="text-sm text-gray-700">الرياض، المملكة العربية السعودية</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="about" class="page">
+            <div class="container">
+                    <div class="text-center mb-8 md:mb-12">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4">
+                            <i class="fas fa-cogs text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                             كيف يعمل النظام
                         </h2>
-                        <p class="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                        <p class="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
                             منصتنا تبسط العملية بأكملها من بداية المشروع إلى الإنجاز
                         </p>
                     </div>
@@ -306,7 +528,7 @@
             </div>
 
             <!-- Platform Features -->
-            <div class="py-12 md:py-20 lg:py-24 bg-white relative overflow-hidden">
+            <div class="py-8 md:py-12 lg:py-16 bg-white relative overflow-hidden">
                 <!-- Background Elements -->
                 <div class="absolute inset-0">
                     <div class="absolute top-20 left-10 w-32 h-32 bg-blue-100 rounded-full opacity-20"></div>
@@ -316,14 +538,14 @@
                 </div>
                 
                 <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div class="text-center mb-12 md:mb-16 lg:mb-20">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mb-6">
-                            <i class="fas fa-star text-white text-2xl"></i>
+                    <div class="text-center mb-8 md:mb-12">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mb-4">
+                            <i class="fas fa-star text-white text-xl"></i>
                         </div>
-                        <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                             ميزات المنصة
                         </h2>
-                        <p class="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                        <p class="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
                             كل ما تحتاجه لإدارة المشاريع بنجاح
                         </p>
                     </div>
@@ -447,60 +669,60 @@
             </div>
 
             <!-- User Types Section -->
-            <div class="py-20 bg-white">
+            <div class="py-8 md:py-12 bg-white">
                 <div class="container mx-auto px-6">
-                    <div class="text-center mb-16">
-                        <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                            For Everyone
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                            للجميع
                         </h2>
-                        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                            Tailored experiences for different user types
+                        <p class="text-base md:text-lg text-gray-600 max-w-3xl mx-auto">
+                            تجارب مخصصة لأنواع مختلفة من المستخدمين
                         </p>
                     </div>
                     
                     <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                         <!-- Client Card -->
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 text-center border-2 border-blue-200">
-                            <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center border-2 border-blue-200">
+                            <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i class="fas fa-user text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-blue-900 mb-4" data-translate="forms.clients">Clients</h3>
-                            <ul class="text-blue-800 text-left space-y-2">
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Browse engineer profiles</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Submit project requests</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Track project progress</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> View project steps</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Manage your projects</li>
+                            <h3 class="text-xl font-bold text-blue-900 mb-3">العملاء</h3>
+                            <ul class="text-blue-800 text-left space-y-1 text-sm">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> تصفح ملفات المهندسين</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> إرسال طلبات المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> تتبع تقدم المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> عرض خطوات المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> إدارة مشاريعك</li>
                             </ul>
                         </div>
                         
                         <!-- Engineer Card -->
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 text-center border-2 border-green-200">
-                            <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 text-center border-2 border-green-200">
+                            <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i class="fas fa-hard-hat text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-green-900 mb-4" data-translate="forms.engineers">Engineers</h3>
-                            <ul class="text-green-800 text-left space-y-2">
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Create detailed profiles</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Receive project requests</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Accept/decline projects</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Define project steps</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Manage accepted projects</li>
+                            <h3 class="text-xl font-bold text-green-900 mb-3">المهندسين</h3>
+                            <ul class="text-green-800 text-left space-y-1 text-sm">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> إنشاء ملفات شخصية مفصلة</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> استقبال طلبات المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> قبول/رفض المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> تحديد خطوات المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> إدارة المشاريع المقبولة</li>
                             </ul>
                         </div>
                         
                         <!-- Admin Card -->
-                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8 text-center border-2 border-purple-200">
-                            <div class="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center border-2 border-purple-200">
+                            <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i class="fas fa-cog text-white text-2xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold text-purple-900 mb-4" data-translate="forms.administrators">Administrators</h3>
-                            <ul class="text-purple-800 text-left space-y-2">
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> View all engineers</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Monitor project status</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Track system analytics</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> Search and filter data</li>
-                                <li><i class="fas fa-check text-green-500 mr-2"></i> System overview</li>
+                            <h3 class="text-xl font-bold text-purple-900 mb-3">المديرين</h3>
+                            <ul class="text-purple-800 text-left space-y-1 text-sm">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> عرض جميع المهندسين</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> مراقبة حالة المشاريع</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> تتبع إحصائيات النظام</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> البحث والتصفية</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i> نظرة عامة على النظام</li>
                             </ul>
                         </div>
                     </div>
@@ -511,18 +733,18 @@
             <div class="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                 <div class="container mx-auto px-6 text-center">
                     <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                        Ready to Build Your Dream Project?
+                        هل أنت مستعد لبناء مشروع أحلامك؟
                     </h2>
                     <p class="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">
-                        Join our platform today and connect with the best engineers in the industry. 
-                        Start your building journey with confidence and transparency.
+                        انضم إلى منصتنا اليوم وتواصل مع أفضل المهندسين في الصناعة. 
+                        ابدأ رحلة البناء الخاصة بك بثقة وشفافية.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <button class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105" onclick="showLogin()">
-                            <i class="fas fa-user-plus mr-2"></i> Create Account
+                            <i class="fas fa-user-plus mr-2"></i> إنشاء حساب
                         </button>
                         <button class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300" onclick="showPage('about')">
-                            <i class="fas fa-info-circle mr-2"></i> Learn More
+                            <i class="fas fa-info-circle mr-2"></i> تعلم المزيد
                         </button>
                     </div>
                 </div>
@@ -532,7 +754,7 @@
         <!-- About Page -->
         <section id="about" class="page">
             <div class="container">
-                <h2 class="page-title" data-translate="pages.about">About Our Project</h2>
+                <h2 class="page-title">حول مشروعنا</h2>
                 <div class="about-content">
                     <div class="about-text">
                         <p>This is a modern web application built with HTML5, CSS3, and JavaScript. It uses a JSON file as a database for data persistence, making it simple yet powerful.</p>
@@ -566,9 +788,9 @@
         <!-- Blog Page -->
         <section id="blog" class="page">
             <div class="container">
-                <h2 class="page-title" data-translate="pages.blog">Blog Posts</h2>
+                <h2 class="page-title">مقالات المدونة</h2>
                 <div class="blog-grid" id="blog-grid">
-                    <!-- Blog posts will be loaded dynamically -->
+                    <!-- سيتم تحميل مقالات المدونة ديناميكياً -->
                 </div>
             </div>
         </section>
@@ -576,21 +798,21 @@
         <!-- Contact Page -->
         <section id="contact" class="page">
             <div class="container">
-                <h2 class="page-title" data-translate="pages.contact">Contact Us</h2>
+                <h2 class="page-title">اتصل بنا</h2>
                 <div class="contact-content">
                     <div class="contact-info">
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
                             <div>
-                                <h3>Email</h3>
+                                <h3>البريد الإلكتروني</h3>
                                 <p>admin@example.com</p>
                             </div>
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-map-marker-alt"></i>
                             <div>
-                                <h3>Location</h3>
-                                <p>Web Development World</p>
+                                <h3>الموقع</h3>
+                                <p>عالم تطوير الويب</p>
                             </div>
                         </div>
                         <div class="contact-item">
@@ -604,22 +826,22 @@
                     
                     <form class="contact-form" id="contact-form">
                         <div class="form-group">
-                            <label for="name">Name</label>
+                            <label for="name">الاسم</label>
                             <input type="text" id="name" name="name" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="email">Email</label>
+                            <label for="email">البريد الإلكتروني</label>
                             <input type="email" id="email" name="email" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="message">Message</label>
+                            <label for="message">الرسالة</label>
                             <textarea id="message" name="message" rows="5" required></textarea>
                         </div>
                         
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Send Message
+                            <i class="fas fa-paper-plane"></i> إرسال الرسالة
                         </button>
                     </form>
                 </div>
@@ -629,90 +851,90 @@
         <!-- Login Page -->
         <section id="login" class="page">
             <div class="container">
-                <h2 class="page-title" data-translate="pages.login">Login</h2>
+                <h2 class="page-title">تسجيل الدخول</h2>
                 <div class="auth-content">
                     <div class="auth-tabs">
-                        <button class="auth-tab active" data-tab="login" data-translate="forms.login">Login</button>
-                        <button class="auth-tab" data-tab="register" data-translate="forms.register">Register</button>
+                        <button class="auth-tab active" data-tab="login">تسجيل الدخول</button>
+                        <button class="auth-tab" data-tab="register">إنشاء حساب</button>
                     </div>
                     
                     <!-- Login Form -->
                     <form class="auth-form active" id="login-form">
                         <div class="form-group">
-                            <label for="login-email">Email</label>
+                            <label for="login-email">البريد الإلكتروني</label>
                             <input type="email" id="login-email" name="email" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="login-password">Password</label>
+                            <label for="login-password">كلمة المرور</label>
                             <input type="password" id="login-password" name="password" required>
                         </div>
                         
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                            <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                         </button>
                     </form>
                     
                     <!-- Register Form -->
                     <form class="auth-form" id="register-form">
                         <div class="form-group">
-                            <label for="register-username" data-translate="forms.username">Username</label>
+                            <label for="register-username">اسم المستخدم</label>
                             <input type="text" id="register-username" name="username" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-email" data-translate="forms.email">Email</label>
+                            <label for="register-email">البريد الإلكتروني</label>
                             <input type="email" id="register-email" name="email" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-password" data-translate="forms.password">Password</label>
+                            <label for="register-password">كلمة المرور</label>
                             <input type="password" id="register-password" name="password" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="register-role" data-translate="forms.role">Role</label>
+                            <label for="register-role">الدور</label>
                             <select id="register-role" name="role" required>
-                                <option value="" data-translate="forms.selectRole">Select Role</option>
-                                <option value="engineer" data-translate="forms.engineer">Engineer</option>
-                                <option value="client" data-translate="forms.client">Client</option>
+                                <option value="">اختر الدور</option>
+                                <option value="engineer">مهندس</option>
+                                <option value="client">عميل</option>
                             </select>
                         </div>
                         
                         <!-- CSS linter fix -->
-                        <div id="engineer-fields" class="engineer-fields" style="display: none">
+                        <div id="engineer-fields" class="engineer-fields" style="display: none;">
                             <div class="form-group">
-                                <label for="register-experience" data-translate="forms.experience">Years of Experience</label>
+                                <label for="register-experience">سنوات الخبرة</label>
                                 <input type="number" id="register-experience" name="experience" min="0" max="50">
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-photo" data-translate="forms.photo">Profile Photo</label>
+                                <label for="register-photo">الصورة الشخصية</label>
                                 <input type="file" id="register-photo" name="photo" accept="image/*">
-                                <small class="form-help" data-translate="forms.uploadPhoto">Upload a professional photo (max 5MB)</small>
+                                <small class="form-help">رفع صورة احترافية (حد أقصى 5 ميجابايت)</small>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-cv" data-translate="forms.cv">CV/Resume</label>
+                                <label for="register-cv">السيرة الذاتية</label>
                                 <input type="file" id="register-cv" name="cv" accept=".pdf,.doc,.docx">
-                                <small class="form-help" data-translate="forms.uploadCV">Upload your CV (PDF, DOC, DOCX - max 10MB)</small>
+                                <small class="form-help">رفع سيرتك الذاتية (PDF, DOC, DOCX - حد أقصى 10 ميجابايت)</small>
                             </div>
                             
                             <div class="form-group">
-                                <label for="register-projects" data-translate="forms.projects">Last Projects (Brief Description)</label>
+                                <label for="register-projects">المشاريع الأخيرة (وصف مختصر)</label>
                                 <textarea id="register-projects" name="projects" rows="4" placeholder="اوصف مشاريعك الأخيرة والتقنيات المستخدمة والإنجازات..."></textarea>
                             </div>
                             
                                                          <div class="form-group">
-                                 <label for="register-skills" data-translate="forms.skills">Skills & Technologies</label>
+                                 <label for="register-skills">المهارات والتقنيات</label>
                                  <input type="text" id="register-skills" name="skills" placeholder="مثال: JavaScript, React, Node.js, Python, AWS">
-                                 <small class="form-help">Separate skills with commas</small>
+                                 <small class="form-help">افصل المهارات بفواصل</small>
                              </div>
                              
                              <div class="form-group">
-                                 <label for="register-bio" data-translate="forms.bio">Bio/About Me</label>
+                                 <label for="register-bio">نبذة شخصية/من أنا</label>
                                  <textarea id="register-bio" name="bio" rows="4" placeholder="أخبرنا عن نفسك وخلفيتك وما يدفعك..."></textarea>
-                                 <small class="form-help">Share your story and what makes you unique</small>
+                                 <small class="form-help">شارك قصتك وما يجعلك مميزاً</small>
                              </div>
                          </div>
 
@@ -720,12 +942,12 @@
                         <!-- CSS linter fix -->
                         <div id="client-fields" class="client-fields" style="display: none;">
                             <div class="form-info">
-                                <p data-translate="forms.clientInfo"><i class="fas fa-info-circle"></i> As a client, you'll be able to create building projects and hire engineers after registration.</p>
+                                <p><i class="fas fa-info-circle"></i> كعميل، ستتمكن من إنشاء مشاريع البناء وتوظيف المهندسين بعد التسجيل.</p>
                             </div>
                         </div>
                         
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-user-plus"></i> Register
+                            <i class="fas fa-user-plus"></i> إنشاء حساب
                         </button>
                     </form>
                 </div>
@@ -735,29 +957,29 @@
         <!-- Dashboard Page -->
         <section id="dashboard" class="page">
             <div class="container">
-                <h2 class="page-title" data-translate="pages.dashboard">Dashboard</h2>
+                <h2 class="page-title">لوحة التحكم</h2>
                 <div class="dashboard-content">
                     <div class="user-info">
                         <div class="user-avatar">
-                            <img id="dashboard-user-photo" class="user-photo" style="display: none;" alt="User Photo">
+                            <img id="dashboard-user-photo" class="user-photo" style="display: none;" alt="صورة المستخدم">
                             <div id="dashboard-default-photo" class="user-photo-default">
                                 <i class="fas fa-user"></i>
                             </div>
                         </div>
                         <div class="user-details">
-                            <h3 id="dashboard-username" data-translate="forms.welcome">Welcome!</h3>
-                            <p id="dashboard-role" data-translate="forms.roleLabel">Role: <span id="user-role"></span></p>
-                            <p id="dashboard-email" data-translate="forms.emailLabel">Email: <span id="user-email"></span></p>
+                            <h3 id="dashboard-username">مرحباً!</h3>
+                            <p id="dashboard-role">الدور: <span id="user-role"></span></p>
+                            <p id="dashboard-email">البريد الإلكتروني: <span id="user-email"></span></p>
                         </div>
                                                  <div class="user-actions">
-                             <button id="edit-profile-btn" class="btn btn-primary" onclick="editProfile()" style="display: none;" data-translate="forms.editProfile">
-                                 <i class="fas fa-edit"></i> Edit Profile
+                             <button id="edit-profile-btn" class="btn btn-primary" onclick="editProfile()" style="display: none;">
+                                 <i class="fas fa-edit"></i> تعديل الملف الشخصي
                              </button>
-                             <button class="btn btn-secondary" onclick="logout()" data-translate="forms.logout">
-                                 <i class="fas fa-sign-out-alt"></i> Logout
+                             <button class="btn btn-secondary" onclick="logout()">
+                                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                              </button>
-                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="showEngineerExploration()" style="margin-left: var(--spacing-sm); display: none;" data-translate="forms.exploreEngineers">
-                                <i class="fas fa-search"></i> Explore Engineers
+                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="showEngineerExploration()" style="margin-left: var(--spacing-sm); display: none;">
+                                <i class="fas fa-search"></i> استكشف المهندسين
                              </button>
                              
                          </div>
@@ -780,7 +1002,7 @@
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="stat-content">
-                                <h4>Total Users</h4>
+                                <h4>إجمالي المستخدمين</h4>
                                 <span id="total-users">0</span>
                             </div>
                         </div>
@@ -795,8 +1017,8 @@
                                      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl mb-4">
                                          <i class="fas fa-hard-hat text-white text-2xl"></i>
                                      </div>
-                                     <h1 class="text-3xl font-bold text-slate-900 mb-2">Engineer Dashboard</h1>
-                                     <p class="text-slate-600 text-lg">Manage your profile, requests, and accepted projects</p>
+                                     <h1 class="text-3xl font-bold text-slate-900 mb-2">لوحة تحكم المهندس</h1>
+                                     <p class="text-slate-600 text-lg">إدارة ملفك الشخصي والطلبات والمشاريع المقبولة</p>
                                  </div>
                              </div>
                          </div>
@@ -808,18 +1030,18 @@
                                      <button class="tab-btn-enhanced active flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-slate-600 hover:border-slate-300 focus:outline-none focus:text-blue-600 focus:border-blue-500 transition-all duration-200" 
                                              data-tab="profile" onclick="switchEngineerTab('profile')">
                                          <i class="fas fa-user mr-2"></i>
-                                         Profile
+                                         الملف الشخصي
                                      </button>
                                      <button class="tab-btn-enhanced flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-slate-600 hover:border-slate-300 focus:outline-none focus:text-blue-600 focus:border-blue-500 transition-all duration-200 relative" 
                                              data-tab="requests" onclick="switchEngineerTab('requests')">
                                          <i class="fas fa-paper-plane mr-2"></i>
-                                         Project Requests
+                                         طلبات المشاريع
                                          <span class="badge-enhanced absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" id="requests-badge" style="display: none;">0</span>
                                      </button>
                                      <button class="tab-btn-enhanced flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-transparent hover:text-slate-600 hover:border-slate-300 focus:outline-none focus:text-blue-600 focus:border-blue-500 transition-all duration-200" 
                                              data-tab="accepted-projects" onclick="switchEngineerTab('accepted-projects')">
                                          <i class="fas fa-check-circle mr-2"></i>
-                                         Accepted Projects
+                                         المشاريع المقبولة
                                      </button>
                                  </nav>
                              </div>
@@ -833,7 +1055,7 @@
                                          <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
                                              <div class="flex-shrink-0">
                                                  <div class="relative">
-                                                     <img id="engineer-photo" src="" alt="Profile Photo" class="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg" style="display: none;">
+                                                     <img id="engineer-photo" src="" alt="صورة الملف الشخصي" class="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg" style="display: none;">
                                                      <div id="default-photo" class="w-32 h-32 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl shadow-lg">
                                                          <i class="fas fa-user"></i>
                                                      </div>
@@ -876,13 +1098,13 @@
                                              </div>
                                          </div>
                                          
-                                         <!-- Recent Projects Section -->
+                                         <!-- المشاريع الأخيرة Section -->
                                          <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
                                              <div class="flex items-center gap-3 mb-4">
                                                  <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                                      <i class="fas fa-project-diagram text-green-600"></i>
                                                  </div>
-                                                 <h3 class="text-xl font-semibold text-slate-900">Recent Projects</h3>
+                                                 <h3 class="text-xl font-semibold text-slate-900">المشاريع الأخيرة</h3>
                                              </div>
                                              <div class="projects-content-enhanced" id="projects-content">
                                                  <p class="text-slate-500 text-center py-8">No projects listed</p>
@@ -895,7 +1117,7 @@
                                                  <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                                                      <i class="fas fa-user text-purple-600"></i>
                                                  </div>
-                                                 <h3 class="text-xl font-semibold text-slate-900">Bio/About Me</h3>
+                                                 <h3 class="text-xl font-semibold text-slate-900">نبذة شخصية/من أنا</h3>
                                              </div>
                                              <div class="bio-content-enhanced" id="bio-content">
                                                  <p class="text-slate-500 text-center py-8">No bio added yet</p>
@@ -910,7 +1132,7 @@
                                          <div class="p-6 border-b border-slate-200">
                                              <h3 class="text-2xl font-bold text-slate-900 flex items-center">
                                                  <i class="fas fa-paper-plane text-blue-600 mr-3"></i>
-                                                 Project Requests
+                                                 طلبات المشاريع
                                              </h3>
                                          </div>
                                          <div class="p-6">
@@ -932,7 +1154,7 @@
                                          <div class="p-6 border-b border-slate-200">
                                              <h3 class="text-2xl font-bold text-slate-900 flex items-center">
                                                  <i class="fas fa-check-circle text-green-600 mr-3"></i>
-                                                 Accepted Projects
+                                                 المشاريع المقبولة
                                              </h3>
                                          </div>
                                          <div class="p-6">
@@ -1085,6 +1307,7 @@
                                     Close
                                 </button>
                             </div>
+                            
                         </div>
                     </div>
                     
@@ -1093,12 +1316,140 @@
                         <!-- Header Section -->
                         <div class="mb-8">
                             <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
-                                <div class="text-center">
+                                <div class="text-center mb-8">
                                     <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
                                         <i class="fas fa-shield-alt text-white text-2xl"></i>
                                     </div>
                                     <h1 class="text-3xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
                                     <p class="text-slate-600 text-lg">Monitor all engineers and their accepted projects</p>
+                                </div>
+                                
+                                <!-- Admin Control Panel -->
+                                <div class="bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-6 border border-slate-200">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                                            <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-cogs text-white text-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-xl font-bold text-slate-900">Admin Control Panel</h3>
+                                                <p class="text-slate-600 text-sm">Manage data and system settings</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                <i class="fas fa-circle text-green-500 text-xs ml-1"></i>
+                                                System Online
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Control Buttons Grid -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <!-- Mock Data Section -->
+                                        <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                                            <div class="flex items-center mb-3">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center ml-2">
+                                                    <i class="fas fa-database text-white text-sm"></i>
+                                                </div>
+                                                <h4 class="font-semibold text-slate-900">Mock Data</h4>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <button class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="generateMockData()">
+                                                    <i class="fas fa-plus ml-1"></i>
+                                                    إنشاء بيانات تجريبية
+                                                </button>
+                                                <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="clearCacheAndReload()">
+                                                    <i class="fas fa-sync-alt ml-1"></i>
+                                                    تحديث البيانات
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- System Management -->
+                                        <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                                            <div class="flex items-center mb-3">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center ml-2">
+                                                    <i class="fas fa-tools text-white text-sm"></i>
+                                                </div>
+                                                <h4 class="font-semibold text-slate-900">System Tools</h4>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <button class="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="addTestEngineers()">
+                                                    <i class="fas fa-user-plus ml-1"></i>
+                                                    إضافة مهندسين تجريبيين
+                                                </button>
+                                                <button class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="clearAllData()">
+                                                    <i class="fas fa-trash ml-1"></i>
+                                                    مسح جميع البيانات
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Debug Tools -->
+                                        <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                                            <div class="flex items-center mb-3">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center ml-2">
+                                                    <i class="fas fa-bug text-white text-sm"></i>
+                                                </div>
+                                                <h4 class="font-semibold text-slate-900">Debug Tools</h4>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <button class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="debugData()">
+                                                    <i class="fas fa-search ml-1"></i>
+                                                    فحص البيانات
+                                                </button>
+                                                <button class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="simpleTest()">
+                                                    <i class="fas fa-magic ml-1"></i>
+                                                    اختبار بسيط
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Quick Actions -->
+                                        <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                                            <div class="flex items-center mb-3">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center ml-2">
+                                                    <i class="fas fa-bolt text-white text-sm"></i>
+                                                </div>
+                                                <h4 class="font-semibold text-slate-900">Quick Actions</h4>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <button class="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="testClientDashboard()">
+                                                    <i class="fas fa-vial ml-1"></i>
+                                                    اختبار لوحة التحكم
+                                                </button>
+                                                <button class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center" onclick="createTestClientData()">
+                                                    <i class="fas fa-users ml-1"></i>
+                                                    إنشاء بيانات عملاء
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- System Status -->
+                                    <div class="mt-6 pt-4 border-t border-slate-200">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                                                <div class="flex items-center">
+                                                    <div class="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
+                                                    <span class="text-slate-600">Database: Connected</span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <div class="w-2 h-2 bg-blue-500 rounded-full ml-2"></div>
+                                                    <span class="text-slate-600">Cache: Active</span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <div class="w-2 h-2 bg-purple-500 rounded-full ml-2"></div>
+                                                    <span class="text-slate-600">Mock Data: Ready</span>
+                                                </div>
+                                            </div>
+                                            <div class="text-slate-500">
+                                                <i class="fas fa-clock ml-1"></i>
+                                                Last updated: <span id="last-updated-time">Just now</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1114,7 +1465,7 @@
                                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <p class="text-slate-600 text-sm font-medium">Total Engineers</p>
+                                            <p class="text-slate-600 text-sm font-medium">إجمالي المهندسين</p>
                                             <p class="text-3xl font-bold text-slate-900 mt-2" id="total-engineers">0</p>
                                         </div>
                                         <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
@@ -1140,7 +1491,7 @@
                                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <p class="text-slate-600 text-sm font-medium">Active Projects</p>
+                                            <p class="text-slate-600 text-sm font-medium">المشاريع النشطة</p>
                                             <p class="text-3xl font-bold text-slate-900 mt-2" id="active-projects">0</p>
                                         </div>
                                         <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
@@ -1243,9 +1594,9 @@
                             <div class="p-6 border-b border-slate-200">
                                 <h2 class="text-2xl font-bold text-slate-900 flex items-center">
                                     <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
-                                    Rejected Projects
+                                    المشاريع المرفوضة
                                 </h2>
-                                <p class="text-slate-600 mt-2">Projects that were rejected by engineers and need reassignment</p>
+                                <p class="text-slate-600 mt-2">المشاريع التي رفضها المهندسون وتحتاج إلى إعادة تعيين</p>
                             </div>
                             <div class="p-6">
                                 <div id="rejected-projects-list" class="space-y-4">
@@ -1322,7 +1673,7 @@
                                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                                                 <i class="fas fa-users text-blue-600"></i>
                                             </div>
-                                            <h5 class="text-lg font-semibold text-slate-900">Available Engineers</h5>
+                                            <h5 class="text-lg font-semibold text-slate-900">المهندسين المتاحين</h5>
                                         </div>
                                     </div>
                                     
@@ -1349,24 +1700,41 @@
                         <div class="client-welcome">
                             <h3 data-translate="forms.welcome">Welcome, <span id="client-name">Client</span>!</h3>
                             <p data-translate="forms.clientInfo">Manage your building projects and connect with qualified engineers</p>
-                            <button class="btn btn-outline btn-sm" onclick="debugData()" style="margin-top: var(--spacing-sm);" data-translate="forms.debugData">
-                                <i class="fas fa-bug"></i> Debug Data
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="addTestEngineers()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.addTestEngineers">
-                                <i class="fas fa-plus"></i> Add Test Engineers
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="clearAllData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.clearData">
-                                <i class="fas fa-trash"></i> Clear Data
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="testClientDashboard()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.testDashboard">
-                                <i class="fas fa-vial"></i> Test Dashboard
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="createTestClientData()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);" data-translate="forms.createTestData">
-                                <i class="fas fa-database"></i> Create Test Data
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="simpleTest()" style="margin-top: var(--spacing-sm); margin-left: var(--spacing-sm);">
-                                <i class="fas fa-magic"></i> Simple Test
-                            </button>
+                            
+                            <!-- Admin Debug Buttons - Only visible for admin users -->
+                            <div id="admin-debug-buttons" class="admin-debug-section" style="display: none;">
+                                <div class="debug-buttons-container" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--gray-50); border-radius: var(--border-radius-md); border: 1px solid var(--gray-200);">
+                                    <h5 style="color: var(--gray-700); margin-bottom: var(--spacing-sm); font-size: var(--font-size-sm);">
+                                        <i class="fas fa-shield-alt"></i> Admin Debug Tools
+                                    </h5>
+                                    <div class="debug-buttons-grid" style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                                        <button class="btn btn-outline btn-sm" onclick="debugData()" data-translate="forms.debugData">
+                                            <i class="fas fa-bug"></i> Debug Data
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" onclick="addTestEngineers()" data-translate="forms.addTestEngineers">
+                                            <i class="fas fa-plus"></i> Add Test Engineers
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" onclick="clearAllData()" data-translate="forms.clearData">
+                                            <i class="fas fa-trash"></i> Clear Data
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" onclick="testClientDashboard()" data-translate="forms.testDashboard">
+                                            <i class="fas fa-vial"></i> Test Dashboard
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" onclick="createTestClientData()" data-translate="forms.createTestData">
+                                            <i class="fas fa-database"></i> Create Test Data
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" onclick="simpleTest()">
+                                            <i class="fas fa-magic"></i> Simple Test
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="generateMockData()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+                                            <i class="fas fa-database"></i> إنشاء بيانات تجريبية
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="clearCacheAndReload()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none; color: white;">
+                                            <i class="fas fa-sync-alt"></i> تحديث البيانات
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Workflow Steps Indicator -->
@@ -1374,29 +1742,29 @@
                             <div class="step active" id="step-1">
                                 <div class="step-number">1</div>
                                 <div class="step-content">
-                                    <h4 data-translate="forms.exploreEngineersTitle">Explore Engineers</h4>
-                                    <p data-translate="forms.exploreEngineersDesc">Browse available engineers and their expertise</p>
+                                    <h4>استكشف المهندسين</h4>
+                                    <p>تصفح المهندسين المتاحين وخبراتهم</p>
                                 </div>
                             </div>
                             <div class="step" id="step-2">
                                 <div class="step-number">2</div>
                                 <div class="step-content">
-                                    <h4 data-translate="forms.workflowStep2">Create Project</h4>
-                                    <p data-translate="forms.workflowStep2Desc">Define your building project requirements</p>
+                                    <h4>إنشاء المشروع</h4>
+                                    <p>حدد متطلبات مشروع البناء الخاص بك</p>
                                 </div>
                             </div>
                             <div class="step" id="step-3">
                                 <div class="step-number">3</div>
                                 <div class="step-content">
-                                    <h4 data-translate="forms.workflowStep3">Select Engineer</h4>
-                                    <p data-translate="forms.workflowStep3Desc">Choose an engineer to lead your project</p>
+                                    <h4>اختر المهندس</h4>
+                                    <p>اختر مهندساً لقيادة مشروعك</p>
                                 </div>
                             </div>
                             <div class="step" id="step-4">
                                 <div class="step-number">4</div>
                                 <div class="step-content">
-                                    <h4 data-translate="forms.workflowStep4">Send Request</h4>
-                                    <p data-translate="forms.workflowStep4Desc">Send project request to selected engineer</p>
+                                    <h4>إرسال الطلب</h4>
+                                    <p>أرسل طلب المشروع للمهندس المختار</p>
                                 </div>
                             </div>
                         </div>
@@ -1407,10 +1775,10 @@
                                     <i class="fas fa-users"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4 data-translate="forms.step1Title">Step 1: Explore Available Engineers</h4>
-                                    <p data-translate="forms.step1Desc">First, browse and explore all available engineers to understand their skills and experience</p>
-                                    <button class="btn btn-primary" onclick="startEngineerExploration()" data-translate="forms.browseEngineers">
-                                        <i class="fas fa-search"></i> Browse Engineers
+                                    <h4>الخطوة 1: استكشف المهندسين المتاحين</h4>
+                                    <p>أولاً، تصفح واستكشف جميع المهندسين المتاحين لفهم مهاراتهم وخبراتهم</p>
+                                    <button class="btn btn-primary" onclick="startEngineerExploration()">
+                                        <i class="fas fa-search"></i> تصفح المهندسين
                                     </button>
                                 </div>
                             </div>
@@ -1420,12 +1788,12 @@
                                     <i class="fas fa-building"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4 data-translate="forms.step2Title">Step 2: Create Building Project</h4>
-                                    <p data-translate="forms.step2Desc">After exploring engineers, create your building project with detailed requirements</p>
-                                    <button class="btn btn-secondary" onclick="openProjectForm()" disabled data-translate="forms.createProject">
-                                        <i class="fas fa-plus"></i> Create Project
+                                    <h4>الخطوة 2: إنشاء مشروع البناء</h4>
+                                    <p>بعد استكشاف المهندسين، أنشئ مشروع البناء الخاص بك مع المتطلبات التفصيلية</p>
+                                    <button class="btn btn-secondary" onclick="openProjectForm()" disabled>
+                                        <i class="fas fa-plus"></i> إنشاء المشروع
                                     </button>
-                                    <small class="action-note" data-translate="forms.completeStep1">Complete Step 1 first</small>
+                                    <small class="action-note">أكمل الخطوة 1 أولاً</small>
                                 </div>
                             </div>
                             
@@ -1434,10 +1802,10 @@
                                     <i class="fas fa-paper-plane"></i>
                                 </div>
                                 <div class="action-content">
-                                    <h4 data-translate="forms.projectRequestsTitle">Project Requests</h4>
-                                    <p data-translate="forms.projectRequestsDesc">View and manage your project requests to engineers</p>
-                                    <button class="btn btn-info" onclick="showProjectRequests()" data-translate="forms.viewRequests">
-                                        <i class="fas fa-list"></i> View Requests
+                                    <h4>طلبات المشاريع</h4>
+                                    <p>عرض وإدارة طلبات مشاريعك للمهندسين</p>
+                                    <button class="btn btn-info" onclick="showProjectRequests()">
+                                        <i class="fas fa-list"></i> عرض الطلبات
                                     </button>
                                 </div>
                             </div>
@@ -1445,97 +1813,97 @@
                         
                         <!-- My Projects Section -->
                         <div class="client-section">
-                            <h4><i class="fas fa-project-diagram"></i> My Building Projects</h4>
+                            <h4><i class="fas fa-project-diagram"></i> مشاريع البناء الخاصة بي</h4>
                             <div class="projects-list" id="client-projects-list">
-                                <p class="text-muted">No projects created yet</p>
+                                <p class="text-muted">لم يتم إنشاء مشاريع بعد</p>
                             </div>
                         </div>
                         
                         <!-- Engineers Browser (Initially Hidden) -->
                         <div id="engineers-browser" class="client-section" style="display: none;">
-                            <h4><i class="fas fa-users"></i> Available Engineers</h4>
+                            <h4><i class="fas fa-users"></i> المهندسين المتاحين</h4>
                             <div class="search-controls">
                                 <input type="text" id="engineer-search" class="search-input" placeholder="ابحث عن المهندسين بالمهارات والخبرة...">
                                 <button class="btn btn-primary" onclick="searchEngineers()">
-                                    <i class="fas fa-search"></i> Search
+                                    <i class="fas fa-search"></i> بحث
                                 </button>
                                 <button class="btn btn-secondary" onclick="hideEngineersSection()">
-                                    <i class="fas fa-times"></i> Close
+                                    <i class="fas fa-times"></i> إغلاق
                                 </button>
                             </div>
                             <div class="engineers-list" id="engineers-list">
-                                <p class="text-muted">No engineers found</p>
+                                <p class="text-muted">لم يتم العثور على مهندسين</p>
                             </div>
                         </div>
                         
                         <!-- Project Requests Section (Initially Hidden) -->
                         <div id="project-requests-section" class="client-section" style="display: none;">
-                            <h4><i class="fas fa-paper-plane"></i> My Project Requests</h4>
+                            <h4><i class="fas fa-paper-plane"></i> طلبات مشاريعي</h4>
                             <div class="requests-controls">
                                 <button class="btn btn-secondary" onclick="hideProjectRequestsSection()">
-                                    <i class="fas fa-times"></i> Close
+                                    <i class="fas fa-times"></i> إغلاق
                                 </button>
                             </div>
                             <div class="requests-list" id="requests-list">
-                                <p class="text-muted">No project requests found</p>
+                                <p class="text-muted">لم يتم العثور على طلبات مشاريع</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Edit Profile Form (Hidden by default) -->
                     <div id="edit-profile-form" class="edit-profile-form" style="display: none;">
-                             <h3><i class="fas fa-edit"></i> Edit Profile</h3>
+                             <h3><i class="fas fa-edit"></i> تعديل الملف الشخصي</h3>
                              <form id="profile-edit-form">
                                  <div class="form-group">
-                                     <label for="edit-username">Username</label>
+                                     <label for="edit-username">اسم المستخدم</label>
                                      <input type="text" id="edit-username" name="username" required>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-email">Email</label>
+                                     <label for="edit-email">البريد الإلكتروني</label>
                                      <input type="email" id="edit-email" name="email" required>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-experience">Years of Experience</label>
+                                     <label for="edit-experience">سنوات الخبرة</label>
                                      <input type="number" id="edit-experience" name="experience" min="0" max="50">
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-photo">Profile Photo</label>
+                                     <label for="edit-photo">صورة الملف الشخصي</label>
                                      <input type="file" id="edit-photo" name="photo" accept="image/*">
-                                     <small class="form-help">Upload a professional photo (max 5MB)</small>
+                                     <small class="form-help">رفع صورة احترافية (حد أقصى 5 ميجابايت)</small>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-cv">CV/Resume</label>
+                                     <label for="edit-cv">السيرة الذاتية</label>
                                      <input type="file" id="edit-cv" name="cv" accept=".pdf,.doc,.docx">
-                                     <small class="form-help">Upload your CV (PDF, DOC, DOCX - max 10MB)</small>
+                                     <small class="form-help">رفع سيرتك الذاتية (PDF, DOC, DOCX - حد أقصى 10 ميجابايت)</small>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-projects" data-translate="forms.projects">Last Projects (Brief Description)</label>
-                                     <textarea id="edit-projects" name="projects" rows="4" placeholder="Describe your recent projects, technologies used, and achievements..."></textarea>
+                                     <label for="edit-projects">المشاريع الأخيرة (وصف مختصر)</label>
+                                     <textarea id="edit-projects" name="projects" rows="4" placeholder="اوصف مشاريعك الأخيرة والتقنيات المستخدمة والإنجازات..."></textarea>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-skills" data-translate="forms.skills">Skills & Technologies</label>
-                                     <input type="text" id="edit-skills" name="skills" placeholder="e.g., JavaScript, React, Node.js, Python, AWS">
-                                     <small class="form-help">Separate skills with commas</small>
+                                     <label for="edit-skills">المهارات والتقنيات</label>
+                                     <input type="text" id="edit-skills" name="skills" placeholder="مثال: JavaScript, React, Node.js, Python, AWS">
+                                     <small class="form-help">افصل المهارات بفواصل</small>
                                  </div>
                                  
                                  <div class="form-group">
-                                     <label for="edit-bio" data-translate="forms.bio">Bio/About Me</label>
-                                     <textarea id="edit-bio" name="bio" rows="4" placeholder="Tell us about yourself, your background, and what drives you..."></textarea>
-                                     <small class="form-help">Share your story and what makes you unique</small>
+                                     <label for="edit-bio">نبذة شخصية/من أنا</label>
+                                     <textarea id="edit-bio" name="bio" rows="4" placeholder="أخبرنا عن نفسك وخلفيتك وما يدفعك..."></textarea>
+                                     <small class="form-help">شارك قصتك وما يجعلك مميزاً</small>
                                  </div>
                                  
                                  <div class="form-actions">
                                      <button type="submit" class="btn btn-primary">
-                                         <i class="fas fa-save"></i> Save Changes
+                                         <i class="fas fa-save"></i> حفظ التغييرات
                                      </button>
                                      <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
-                                         <i class="fas fa-times"></i> Cancel
+                                         <i class="fas fa-times"></i> إلغاء
                                      </button>
                                  </div>
                              </form>
@@ -1546,268 +1914,307 @@
     </main>
 
     <!-- Building Project Form Modal -->
-    <div id="project-form-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-building"></i> <span data-translate="forms.createProjectTitle">Create Building Project</span></h3>
-                <button class="modal-close" onclick="closeProjectForm()">&times;</button>
+    <div id="project-form-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden transform scale-95 transition-all duration-300 ease-in-out">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-building text-xl"></i>
             </div>
-            <div class="modal-body">
-                <form id="building-project-form">
-                    <!-- Basic Project Information -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-info-circle"></i> <span data-translate="forms.basicInfo">Basic Information</span></h4>
+                            <h3 class="text-2xl font-bold">إنشاء مشروع البناء</h3>
+                        </div>
+                        <button onclick="closeProjectForm()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                    <form id="building-project-form" class="space-y-8">
                         
-                        <div class="form-group">
-                            <label for="project-name" data-translate="forms.projectName">Project Name</label>
-                            <input type="text" id="project-name" name="projectName" required placeholder="مثال: بيت أحلامي">
+                        <!-- Step 1: Basic Information -->
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <div class="flex items-center mb-6">
+                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                                <h4 class="text-xl font-semibold text-gray-900 mr-3">المعلومات الأساسية</h4>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="project-type" data-translate="forms.buildingType">Building Type</label>
-                            <select id="project-type" name="projectType" required>
-                                <option value="" data-translate="forms.selectBuildingType">Select Building Type</option>
-                                <option value="residential-house" data-translate="forms.residentialHouse">Residential House</option>
-                                <option value="apartment" data-translate="forms.apartment">Apartment Building</option>
-                                <option value="commercial" data-translate="forms.commercial">Commercial Building</option>
-                                <option value="warehouse" data-translate="forms.warehouse">Warehouse</option>
-                                <option value="office" data-translate="forms.office">Office Building</option>
-                                <option value="villa" data-translate="forms.villa">Villa</option>
-                                <option value="duplex" data-translate="forms.duplex">Duplex</option>
-                                <option value="other" data-translate="forms.other">Other</option>
-                            </select>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="project-name" class="block text-sm font-medium text-gray-700">اسم المشروع *</label>
+                                    <input type="text" id="project-name" name="projectName" required 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                           placeholder="مثال: بيت أحلامي">
                         </div>
                         
-                        <div class="form-group">
-                            <label for="project-address" data-translate="forms.projectAddress">Project Address</label>
-                            <textarea id="project-address" name="address" required placeholder="العنوان الكامل حيث سيتم بناء المبنى" rows="2"></textarea>
+                                <div class="space-y-2">
+                                    <label for="project-type" class="block text-sm font-medium text-gray-700">نوع المبنى *</label>
+                                    <select id="project-type" name="projectType" required 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                        <option value="">اختر نوع المبنى</option>
+                                        <option value="residential-house">منزل سكني</option>
+                                        <option value="apartment">مبنى سكني</option>
+                                        <option value="commercial">مبنى تجاري</option>
+                                        <option value="warehouse">مستودع</option>
+                                        <option value="office">مبنى مكتبي</option>
+                                        <option value="villa">فيلا</option>
+                                        <option value="duplex">دوبلكس</option>
+                                        <option value="other">أخرى</option>
+                                    </select>
                         </div>
                     </div>
 
-                    <!-- Building Specifications -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-ruler-combined"></i> <span data-translate="forms.buildingSpecs">Building Specifications</span></h4>
+                            <div class="mt-6 space-y-2">
+                                <label for="project-address" class="block text-sm font-medium text-gray-700">عنوان المشروع *</label>
+                                <textarea id="project-address" name="address" required rows="3"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                                          placeholder="العنوان الكامل حيث سيتم بناء المبنى"></textarea>
+                            </div>
+                        </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="building-size" data-translate="forms.buildingSize">Total Building Size (sq ft)</label>
-                                <input type="number" id="building-size" name="buildingSize" required min="1" placeholder="مثال: 2500">
+                        <!-- Step 2: Building Specifications -->
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <div class="flex items-center mb-6">
+                                <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                                <h4 class="text-xl font-semibold text-gray-900 mr-3">مواصفات المبنى</h4>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="lot-size" data-translate="forms.lotSize">Lot Size (sq ft)</label>
-                                <input type="number" id="lot-size" name="lotSize" min="1" placeholder="مثال: 5000">
-                                <small class="form-help" data-translate="forms.landPlotSize">Size of the land/plot</small>
-                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="space-y-2">
+                                    <label for="building-size" class="block text-sm font-medium text-gray-700">مساحة المبنى (قدم²) *</label>
+                                    <input type="number" id="building-size" name="buildingSize" required min="1" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                           placeholder="مثال: 2500">
                         </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="floors-count" data-translate="forms.floorsCount">Number of Floors</label>
-                                <input type="number" id="floors-count" name="floorsCount" required min="1" max="10" placeholder="e.g., 2">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="bedrooms-count" data-translate="forms.bedroomsCount">Number of Bedrooms</label>
-                                <input type="number" id="bedrooms-count" name="bedroomsCount" min="1" max="20" placeholder="e.g., 3">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="bathrooms-count" data-translate="forms.bathroomsCount">Number of Bathrooms</label>
-                                <input type="number" id="bathrooms-count" name="bathroomsCount" min="1" max="15" placeholder="e.g., 2">
+                                <div class="space-y-2">
+                                    <label for="lot-size" class="block text-sm font-medium text-gray-700">مساحة الأرض (قدم²)</label>
+                                    <input type="number" id="lot-size" name="lotSize" min="1" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                           placeholder="مثال: 5000">
+                                    <p class="text-xs text-gray-500">مساحة الأرض/القطعة</p>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="parking-spaces" data-translate="forms.parkingSpaces">Parking Spaces</label>
-                                <input type="number" id="parking-spaces" name="parkingSpaces" min="0" max="10" placeholder="e.g., 2">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Construction Details -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-hammer"></i> Construction Details</h4>
-                        
-                        <div class="form-group">
-                            <label for="foundation-type">Foundation Type</label>
-                            <select id="foundation-type" name="foundationType">
-                                <option value="">Select Foundation Type</option>
-                                <option value="slab-on-grade">Slab on Grade</option>
-                                <option value="crawl-space">Crawl Space</option>
-                                <option value="basement">Full Basement</option>
-                                <option value="pier-beam">Pier and Beam</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="structural-system">Structural System</label>
-                            <select id="structural-system" name="structuralSystem">
-                                <option value="">Select Structural System</option>
-                                <option value="wood-frame">Wood Frame</option>
-                                <option value="steel-frame">Steel Frame</option>
-                                <option value="concrete">Reinforced Concrete</option>
-                                <option value="masonry">Masonry</option>
-                                <option value="hybrid">Hybrid System</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="exterior-materials">Exterior Materials (Select multiple)</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="brick"> Brick
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="stone"> Stone
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="vinyl-siding"> Vinyl Siding
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="wood-siding"> Wood Siding
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="stucco"> Stucco
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="exteriorMaterials" value="metal"> Metal Panels
-                                </label>
+                                <div class="space-y-2">
+                                    <label for="floors-count" class="block text-sm font-medium text-gray-700">عدد الطوابق *</label>
+                                    <input type="number" id="floors-count" name="floorsCount" required min="1" max="10" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                           placeholder="مثال: 2">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Special Features -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-star"></i> Special Features & Requirements</h4>
-                        
-                        <div class="form-group">
-                            <label for="special-features">Special Features (Select all that apply)</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="swimming-pool"> Swimming Pool
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="garden"> Garden/Landscaping
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="balcony"> Balcony/Terrace
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="fireplace"> Fireplace
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="solar-panels"> Solar Panels
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="smart-home"> Smart Home System
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="security-system"> Security System
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="specialFeatures" value="elevator"> Elevator
-                                </label>
-                            </div>
+                        <!-- Step 3: Project Documents -->
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <div class="flex items-center mb-6">
+                                <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                                <h4 class="text-xl font-semibold text-gray-900 mr-3">وثائق المشروع</h4>
+                        </div>
+                            <p class="text-gray-600 mb-6">يرجى الإجابة على الأسئلة التالية ورفع الوثائق المطلوبة</p>
+                            
+                            <div class="space-y-6">
+                                <!-- Question 1: Property Deed -->
+                                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                    <div class="flex items-center mb-4">
+                                        <i class="fas fa-home text-purple-600 text-xl ml-3"></i>
+                                        <h5 class="text-lg font-semibold text-gray-900">هل يوجد صك ملكية للأرض؟</h5>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="accessibility-requirements">Accessibility Requirements</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="accessibilityFeatures" value="wheelchair-accessible"> Wheelchair Accessible
+                                    <div class="flex space-x-4 rtl:space-x-reverse mb-4">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasPropertyDeed" value="yes" onchange="toggleDocumentUpload('property-deed', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">نعم</span>
                                 </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="accessibilityFeatures" value="ramps"> Ramps
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasPropertyDeed" value="no" onchange="toggleDocumentUpload('property-deed', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">لا</span>
                                 </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="accessibilityFeatures" value="wide-doorways"> Wide Doorways
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="accessibilityFeatures" value="accessible-bathroom"> Accessible Bathroom
-                                </label>
+                                    </div>
+                                    
+                                    <div id="property-deed-upload" class="hidden">
+                                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
+                                            <i class="fas fa-cloud-upload-alt text-purple-500 text-3xl mb-3"></i>
+                                            <p class="text-gray-700 font-medium mb-2">رفع صك الملكية</p>
+                                            <input type="file" id="property-deed-file" name="propertyDeedFile" accept="image/*,.pdf" multiple
+                                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            <p class="text-sm text-gray-500 mt-2">يمكن رفع عدة صور أو ملف PDF</p>
+                                            <div id="property-deed-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Project Details -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-calendar-alt"></i> <span data-translate="forms.projectTimeline">Project Timeline & Budget</span></h4>
+                                <!-- Question 2: Building Permit -->
+                                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                    <div class="flex items-center mb-4">
+                                        <i class="fas fa-clipboard-check text-purple-600 text-xl ml-3"></i>
+                                        <h5 class="text-lg font-semibold text-gray-900">هل يوجد رخصة بناء؟</h5>
+                                    </div>
+                                    
+                                    <div class="flex space-x-4 rtl:space-x-reverse mb-4">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasBuildingPermit" value="yes" onchange="toggleDocumentUpload('building-permit', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">نعم</span>
+                                </label>
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasBuildingPermit" value="no" onchange="toggleDocumentUpload('building-permit', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">لا</span>
+                                </label>
+                            </div>
+                                    
+                                    <div id="building-permit-upload" class="hidden">
+                                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
+                                            <i class="fas fa-cloud-upload-alt text-purple-500 text-3xl mb-3"></i>
+                                            <p class="text-gray-700 font-medium mb-2">رفع رخصة البناء</p>
+                                            <input type="file" id="building-permit-file" name="buildingPermitFile" accept="image/*,.pdf" multiple
+                                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            <p class="text-sm text-gray-500 mt-2">يمكن رفع عدة صور أو ملف PDF</p>
+                                            <div id="building-permit-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                                        </div>
+                                    </div>
+                        </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="project-budget" data-translate="forms.budget">Estimated Budget ($)</label>
-                                <input type="number" id="project-budget" name="budget" required min="10000" placeholder="مثال: 250000">
-                                <small class="form-help" data-translate="forms.totalBudget">Total estimated budget for the entire project</small>
+                                <!-- Question 3: Building Plans -->
+                                <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                    <div class="flex items-center mb-4">
+                                        <i class="fas fa-drafting-compass text-purple-600 text-xl ml-3"></i>
+                                        <h5 class="text-lg font-semibold text-gray-900">هل يوجد مخططات للمبنى؟</h5>
+                                    </div>
+                                    
+                                    <div class="flex space-x-4 rtl:space-x-reverse mb-4">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasBuildingPlans" value="yes" onchange="toggleDocumentUpload('building-plans', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">نعم</span>
+                                </label>
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="hasBuildingPlans" value="no" onchange="toggleDocumentUpload('building-plans', this.value)"
+                                                   class="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500">
+                                            <span class="mr-2 text-gray-700 font-medium">لا</span>
+                                </label>
+                                    </div>
+                                    
+                                    <div id="building-plans-upload" class="hidden">
+                                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
+                                            <i class="fas fa-cloud-upload-alt text-purple-500 text-3xl mb-3"></i>
+                                            <p class="text-gray-700 font-medium mb-2">رفع المخططات</p>
+                                            <input type="file" id="building-plans-file" name="buildingPlansFile" accept="image/*,.pdf" multiple
+                                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            <p class="text-sm text-gray-500 mt-2">يمكن رفع عدة صور أو ملف PDF</p>
+                                            <div id="building-plans-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+
+                        <!-- Step 4: Project Details -->
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <div class="flex items-center mb-6">
+                                <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                                <h4 class="text-xl font-semibold text-gray-900 mr-3">الجدول الزمني والميزانية</h4>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="project-timeline" data-translate="forms.timeline">Expected Timeline</label>
-                                <select id="project-timeline" name="timeline" required>
-                                    <option value="" data-translate="forms.selectTimeline">Select Timeline</option>
-                                    <option value="1-3 months" data-translate="forms.months1to3">1-3 months</option>
-                                    <option value="3-6 months" data-translate="forms.months3to6">3-6 months</option>
-                                    <option value="6-12 months" data-translate="forms.months6to12">6-12 months</option>
-                                    <option value="1-2 years" data-translate="forms.years1to2">1-2 years</option>
-                                    <option value="2+ years" data-translate="forms.years2plus">2+ years</option>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="project-budget" class="block text-sm font-medium text-gray-700">الميزانية المقدرة ($) *</label>
+                                    <input type="number" id="project-budget" name="budget" required min="10000" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                                           placeholder="مثال: 250000">
+                                    <p class="text-xs text-gray-500">إجمالي الميزانية المقدرة للمشروع بالكامل</p>
+                            </div>
+                            
+                                <div class="space-y-2">
+                                    <label for="project-timeline" class="block text-sm font-medium text-gray-700">الجدول الزمني المتوقع *</label>
+                                    <select id="project-timeline" name="timeline" required 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors">
+                                        <option value="">اختر الجدول الزمني</option>
+                                        <option value="1-3 months">1-3 أشهر</option>
+                                        <option value="3-6 months">3-6 أشهر</option>
+                                        <option value="6-12 months">6-12 شهر</option>
+                                        <option value="1-2 years">1-2 سنة</option>
+                                        <option value="2+ years">أكثر من سنتين</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="start-date" data-translate="forms.startDate">Preferred Start Date</label>
-                            <input type="date" id="start-date" name="startDate" min="2024-01-01">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                <div class="space-y-2">
+                                    <label for="start-date" class="block text-sm font-medium text-gray-700">تاريخ البداية المفضل</label>
+                                    <input type="date" id="start-date" name="startDate" min="2024-01-01" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors">
                         </div>
                         
-                        <div class="form-group">
-                            <label for="project-description" data-translate="forms.description">Additional Project Description</label>
-                            <textarea id="project-description" name="description" rows="4" placeholder="اوصف رؤيتك وتفضيلاتك المعمارية والمتطلبات المحددة وتوقعات الجودة، إلخ."></textarea>
-                            <small class="form-help" data-translate="forms.additionalDetails">Any additional details that will help engineers understand your project</small>
+                                <div class="space-y-2">
+                                    <label for="contact-preference" class="block text-sm font-medium text-gray-700">طريقة التواصل المفضلة *</label>
+                                    <select id="contact-preference" name="contactPreference" required 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors">
+                                        <option value="">اختر طريقة التواصل</option>
+                                        <option value="email">البريد الإلكتروني</option>
+                                        <option value="phone">مكالمة هاتفية</option>
+                                        <option value="both">البريد الإلكتروني والهاتف</option>
+                                    </select>
+                                </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="contact-preference">Preferred Contact Method</label>
-                            <select id="contact-preference" name="contactPreference" required>
-                                <option value="">Select Contact Method</option>
-                                <option value="email">Email</option>
-                                <option value="phone">Phone Call</option>
-                                <option value="both">Both Email and Phone</option>
-                            </select>
+                            <div class="mt-6 space-y-2">
+                                <label for="project-description" class="block text-sm font-medium text-gray-700">وصف إضافي للمشروع</label>
+                                <textarea id="project-description" name="description" rows="4" 
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors resize-none"
+                                          placeholder="اوصف رؤيتك وتفضيلاتك المعمارية والمتطلبات المحددة وتوقعات الجودة، إلخ."></textarea>
+                                <p class="text-xs text-gray-500">أي تفاصيل إضافية ستساعد المهندسين على فهم مشروعك</p>
                         </div>
                     </div>
 
-                    <!-- Engineer Selection Section -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-user-tie"></i> <span data-translate="forms.engineerSelection">Select Project Engineer</span></h4>
-                        <div class="engineer-selection">
-                            <h4><i class="fas fa-exclamation-triangle"></i> <span data-translate="forms.engineerSelection">Engineer Selection Required</span></h4>
-                            <p data-translate="forms.engineerSelection">You must select an engineer to lead your project. Please browse available engineers first if you haven't already.</p>
-                            
-                            <div id="selected-engineer-display" class="selected-engineer" style="display: none;">
-                                <div class="selected-engineer-info">
-                                    <img id="selected-engineer-photo" class="selected-engineer-photo" style="display: none;" alt="Engineer Photo">
-                                    <div id="selected-engineer-photo-default" class="selected-engineer-photo-default">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="selected-engineer-details">
-                                        <h5 id="selected-engineer-name">Engineer Name</h5>
-                                        <p id="selected-engineer-experience">Experience: 0 years</p>
-                                        <p id="selected-engineer-skills">Skills: Not specified</p>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="changeEngineerSelection()">
-                                    <i class="fas fa-edit"></i> Change Engineer
-                                </button>
+                        <!-- Step 5: Engineer Selection -->
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                            <div class="flex items-center mb-6">
+                                <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold">5</div>
+                                <h4 class="text-xl font-semibold text-gray-900 mr-3">اختيار مهندس المشروع</h4>
                             </div>
                             
-                            <div id="no-engineer-selected" class="no-engineer-selected">
-                                <p data-translate="forms.noEngineerSelected"><i class="fas fa-info-circle"></i> No engineer selected yet</p>
-                                <button type="button" class="btn btn-primary" onclick="browseEngineersFromForm()" data-translate="forms.browseEngineers">
-                                    <i class="fas fa-search"></i> Browse Engineers
+                            <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                <div class="text-center mb-6">
+                                    <i class="fas fa-exclamation-triangle text-yellow-500 text-3xl mb-3"></i>
+                                    <h5 class="text-lg font-semibold text-gray-900 mb-2">اختيار المهندس مطلوب</h5>
+                                    <p class="text-gray-600">يجب عليك اختيار مهندس لقيادة مشروعك. يرجى تصفح المهندسين المتاحين أولاً إذا لم تكن قد فعلت ذلك بالفعل.</p>
+                                </div>
+                                
+                                <div id="selected-engineer-display" class="hidden">
+                                    <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                                            <img id="selected-engineer-photo" class="w-16 h-16 rounded-full object-cover border-2 border-green-500 hidden" alt="صورة المهندس">
+                                            <div id="selected-engineer-photo-default" class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                            <div>
+                                                <h6 id="selected-engineer-name" class="font-semibold text-gray-900">اسم المهندس</h6>
+                                                <p id="selected-engineer-experience" class="text-sm text-gray-600">الخبرة: 0 سنة</p>
+                                                <p id="selected-engineer-skills" class="text-sm text-gray-600">المهارات: غير محدد</p>
+                                    </div>
+                                </div>
+                                        <button type="button" onclick="changeEngineerSelection()" 
+                                                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                                            <i class="fas fa-edit ml-2"></i>تغيير المهندس
                                 </button>
+                                    </div>
+                            </div>
+                            
+                                <div id="no-engineer-selected" class="text-center">
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8">
+                                        <i class="fas fa-info-circle text-gray-400 text-3xl mb-3"></i>
+                                        <p class="text-gray-600 mb-4">لم يتم اختيار مهندس بعد</p>
+                                        <button type="button" onclick="browseEngineersFromForm()" 
+                                                class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                            <i class="fas fa-search ml-2"></i>تصفح المهندسين
+                                </button>
+                                    </div>
                             </div>
                             
                             <input type="hidden" id="selected-engineer-id" name="selectedEngineerId" required>
@@ -1815,13 +2222,18 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeProjectForm()" data-translate="forms.cancel">
-                    <i class="fas fa-times"></i> Cancel
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rtl:space-x-reverse">
+                    <button onclick="closeProjectForm()" 
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-times ml-2"></i>إلغاء
                 </button>
-                <button class="btn btn-primary" onclick="submitProject()" data-translate="forms.createProject">
-                    <i class="fas fa-save"></i> Create Project
+                    <button onclick="submitProject()" 
+                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all">
+                        <i class="fas fa-save ml-2"></i>إنشاء المشروع
                 </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1857,22 +2269,22 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Building Web Project</h3>
-                    <p>A modern web application with JSON database</p>
+                    <h3>مشروع بناء الويب</h3>
+                    <p>تطبيق ويب حديث مع قاعدة بيانات JSON</p>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Quick Links</h3>
+                    <h3>روابط سريعة</h3>
                     <ul class="footer-links">
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#blog">Blog</a></li>
-                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="#home">الرئيسية</a></li>
+                        <li><a href="#about">حول</a></li>
+                        <li><a href="#blog">المدونة</a></li>
+                        <li><a href="#contact">اتصل بنا</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Connect</h3>
+                    <h3>تواصل معنا</h3>
                     <div class="social-links">
                         <a href="#" class="social-link"><i class="fab fa-github"></i></a>
                         <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
@@ -1882,7 +2294,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 Building Web Project. All rights reserved.</p>
+                <p>&copy; 2024 مشروع بناء الويب. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </footer>
@@ -1894,7 +2306,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="user-modal-title">
-                    <i class="fas fa-user-plus"></i> Add New User
+                    <i class="fas fa-user-plus"></i> إضافة مستخدم جديد
                 </h3>
                 <button class="modal-close" onclick="closeUserModal()">
                     <i class="fas fa-times"></i>
@@ -1905,70 +2317,70 @@
                     <input type="hidden" id="user-id" name="id">
                     
                     <div class="form-group">
-                        <label for="user-username">Username *</label>
+                        <label for="user-username">اسم المستخدم *</label>
                         <input type="text" id="user-username" name="username" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="user-email">Email *</label>
+                        <label for="user-email">البريد الإلكتروني *</label>
                         <input type="email" id="user-email" name="email" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="user-password">Password *</label>
+                        <label for="user-password">كلمة المرور *</label>
                         <input type="password" id="user-password" name="password" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="user-role">Role *</label>
+                        <label for="user-role">الدور *</label>
                         <select id="user-role" name="role" required onchange="toggleRoleFields()">
-                            <option value="">Select Role</option>
-                            <option value="admin">Admin</option>
-                            <option value="engineer">Engineer</option>
-                            <option value="client">Client</option>
+                            <option value="">اختر الدور</option>
+                            <option value="admin">مدير</option>
+                            <option value="engineer">مهندس</option>
+                            <option value="client">عميل</option>
                         </select>
                     </div>
                     
                     <!-- Engineer-specific fields -->
                     <div id="engineer-fields" class="engineer-fields" style="display: none;">
                         <div class="form-group">
-                            <label for="user-experience">Experience (years)</label>
+                            <label for="user-experience">الخبرة (سنوات)</label>
                             <input type="number" id="user-experience" name="experience" min="0" max="50">
                         </div>
                         
                         <div class="form-group">
-                            <label for="user-skills" data-translate="forms.skills">Skills (comma-separated)</label>
-                            <input type="text" id="user-skills" name="skills" placeholder="e.g., Construction, Architecture, Engineering">
+                            <label for="user-skills">المهارات (مفصولة بفواصل)</label>
+                            <input type="text" id="user-skills" name="skills" placeholder="مثال: البناء، العمارة، الهندسة">
                         </div>
                         
                         <div class="form-group">
-                            <label for="user-bio" data-translate="forms.bio">Bio</label>
-                            <textarea id="user-bio" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                            <label for="user-bio">نبذة شخصية</label>
+                            <textarea id="user-bio" name="bio" rows="3" placeholder="أخبرنا عن نفسك..."></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="user-projects" data-translate="forms.projects">Previous Projects</label>
-                            <textarea id="user-projects" name="projects" rows="3" placeholder="Describe your previous projects..."></textarea>
+                            <label for="user-projects">المشاريع السابقة</label>
+                            <textarea id="user-projects" name="projects" rows="3" placeholder="اوصف مشاريعك السابقة..."></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="user-photo">Profile Photo</label>
+                            <label for="user-photo">صورة الملف الشخصي</label>
                             <input type="file" id="user-photo" name="photo" accept="image/*">
-                            <div class="form-help">Max size: 5MB. Supported formats: JPG, PNG, GIF</div>
+                            <div class="form-help">الحد الأقصى: 5 ميجابايت. الصيغ المدعومة: JPG, PNG, GIF</div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="user-cv">CV/Resume</label>
+                            <label for="user-cv">السيرة الذاتية</label>
                             <input type="file" id="user-cv" name="cv" accept=".pdf,.doc,.docx">
-                            <div class="form-help">Max size: 10MB. Supported formats: PDF, DOC, DOCX</div>
+                            <div class="form-help">الحد الأقصى: 10 ميجابايت. الصيغ المدعومة: PDF, DOC, DOCX</div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeUserModal()" data-translate="forms.cancel">Cancel</button>
-                <button type="submit" form="user-form" class="btn btn-primary" data-translate="forms.save">
-                    <i class="fas fa-save"></i> Save User
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">إلغاء</button>
+                <button type="submit" form="user-form" class="btn btn-primary">
+                    <i class="fas fa-save"></i> حفظ المستخدم
                 </button>
             </div>
         </div>
@@ -1979,23 +2391,23 @@
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3>
-                    <i class="fas fa-exclamation-triangle text-red-500"></i> Confirm Delete
+                    <i class="fas fa-exclamation-triangle text-red-500"></i> تأكيد الحذف
                 </h3>
                 <button class="modal-close" onclick="closeDeleteUserModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this user?</p>
+                <p>هل أنت متأكد من أنك تريد حذف هذا المستخدم؟</p>
                 <div id="delete-user-info" class="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
                     <!-- User info will be populated here -->
                 </div>
-                <p class="text-red-600 font-semibold mt-4">This action cannot be undone!</p>
+                <p class="text-red-600 font-semibold mt-4">لا يمكن التراجع عن هذا الإجراء!</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteUserModal()">Cancel</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteUserModal()">إلغاء</button>
                 <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">
-                    <i class="fas fa-trash"></i> Delete User
+                    <i class="fas fa-trash"></i> حذف المستخدم
                 </button>
             </div>
         </div>
