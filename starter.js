@@ -346,18 +346,29 @@ class WebApp {
         console.log('Current page before:', this.currentPage);
         
         // Hide all pages
-        document.querySelectorAll('.page').forEach(page => {
+        const allPages = document.querySelectorAll('.page');
+        console.log('Total pages found:', allPages.length);
+        allPages.forEach(page => {
             page.classList.remove('active');
+            // Remove any inline display styles
+            page.style.display = '';
         });
 
         // Show target page
         const targetPage = document.getElementById(pageId);
         if (targetPage) {
+            // Remove any inline display style first
+            targetPage.style.display = '';
+            // Then add active class
             targetPage.classList.add('active');
             this.currentPage = pageId;
             console.log('Page shown successfully:', pageId);
+            console.log('Page element:', targetPage);
+            console.log('Page classes after:', targetPage.className);
+            console.log('Page display style:', window.getComputedStyle(targetPage).display);
         } else {
             console.error('Page not found:', pageId);
+            console.error('Available page IDs:', Array.from(allPages).map(p => p.id));
         }
 
         // Update navigation
@@ -416,9 +427,10 @@ class WebApp {
             return;
         }
         
-        // Ensure both dashboards are hidden by default
+        // Ensure all dashboards are hidden by default
         const clientDashboard = document.getElementById('client-dashboard');
         const engineerDashboard = document.getElementById('engineer-dashboard');
+        const adminDashboard = document.getElementById('admin-dashboard');
         
         if (clientDashboard) {
             clientDashboard.style.display = 'none';
@@ -429,6 +441,14 @@ class WebApp {
             engineerDashboard.style.display = 'none';
             console.log('Engineer dashboard hidden by default');
         }
+        
+        if (adminDashboard) {
+            adminDashboard.style.display = 'none';
+            console.log('Admin dashboard hidden by default');
+        }
+        
+        // Update basic dashboard info first
+        this.updateDashboard();
         
         // Show appropriate dashboard based on user role
         if (this.currentUser.role === 'client') {
@@ -448,6 +468,8 @@ class WebApp {
             this.showAdminDashboard();
         } else {
             console.log('Unknown user role:', this.currentUser.role);
+            // Just show the basic dashboard
+            this.updateDashboard();
         }
     }
 
@@ -949,19 +971,35 @@ class WebApp {
         }
     }
 
+    // Validate phone number format
+    validatePhoneNumber(phone) {
+        // Remove spaces and dashes for validation
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        
+        // Check if it's a valid phone number (starts with + or digit, contains only digits)
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        return phoneRegex.test(cleanPhone);
+    }
+
     // Handle registration
     async handleRegister(form) {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
         // Validate form
-        if (!data.username || !data.email || !data.password || !data.role) {
-            this.showError('Please fill in all fields');
+        if (!data.username || !data.email || !data.password || !data.role || !data.phone) {
+            this.showError('يرجى ملء جميع الحقول المطلوبة');
+            return;
+        }
+
+        // Validate phone number
+        if (!this.validatePhoneNumber(data.phone)) {
+            this.showError('يرجى إدخال رقم هاتف صحيح');
             return;
         }
 
         if (data.password.length < 6) {
-            this.showError('Password must be at least 6 characters long');
+            this.showError('يجب أن تكون كلمة المرور 6 أحرف على الأقل');
             return;
         }
 
@@ -1193,6 +1231,7 @@ class WebApp {
                         username: userData.username,
                         email: userData.email,
                         password: userData.password,
+                        phone: userData.phone || '', // Add phone number
                         role: userData.role,
                         createdAt: new Date().toISOString()
                     };
@@ -1230,23 +1269,24 @@ class WebApp {
 
     // Login user
     loginUser(user) {
+        console.log('=== LOGIN USER DEBUG ===');
+        console.log('User being logged in:', user);
+        
+        try {
         this.currentUser = user;
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.updateAuthUI();
-        
-        // Redirect to appropriate dashboard based on user role
-        if (user.role === 'admin') {
-            this.showPage('dashboard');
-            this.showAdminDashboard();
-        } else if (user.role === 'engineer') {
-            this.showPage('dashboard');
-            this.showEngineerDashboard();
-        } else if (user.role === 'client') {
-            this.showPage('dashboard');
-            this.showClientDashboard();
-        } else {
-            // Fallback to general dashboard
-            this.showPage('dashboard');
+            
+            console.log('User authenticated, redirecting to dashboard...');
+            console.log('User role:', user.role);
+            
+            // Show the dashboard page - this will automatically call initializeDashboard
+            // which will show the appropriate role-specific dashboard
+        this.showPage('dashboard');
+            
+        } catch (error) {
+            console.error('Error in loginUser:', error);
+            this.showError('Failed to complete login. Please try again.');
         }
     }
 
@@ -1410,6 +1450,9 @@ class WebApp {
             console.error('Client dashboard element not found');
         }
         
+        // Initialize engineer search functionality
+        this.initializeEngineerSearch();
+        
         // Update user info in client dashboard
         this.updateClientDashboardInfo();
         
@@ -1425,6 +1468,18 @@ class WebApp {
         const clientName = document.getElementById('client-name');
         if (clientName && this.currentUser) {
             clientName.textContent = this.currentUser.username;
+        }
+        
+        // Update phone
+        const clientPhone = document.getElementById('client-phone');
+        if (clientPhone && this.currentUser) {
+            clientPhone.textContent = this.currentUser.phone || 'غير محدد';
+        }
+        
+        // Update email
+        const clientEmail = document.getElementById('client-email');
+        if (clientEmail && this.currentUser) {
+            clientEmail.textContent = this.currentUser.email || 'غير محدد';
         }
     }
 
@@ -1479,7 +1534,7 @@ class WebApp {
         
         const engineerDashboard = document.getElementById('engineer-dashboard');
         if (engineerDashboard) {
-            engineerDashboard.style.display = 'block';
+        engineerDashboard.style.display = 'block';
             console.log('Engineer dashboard displayed');
         } else {
             console.error('Engineer dashboard element not found');
@@ -1745,8 +1800,28 @@ class WebApp {
         console.log('Found engineers:', engineers);
         console.log('Engineers count:', engineers.length);
 
+        // Update search results count
+        const resultsCount = document.getElementById('search-results-count');
+        if (resultsCount) {
+            if (searchTerm) {
+                resultsCount.textContent = `Found ${engineers.length} engineer${engineers.length !== 1 ? 's' : ''} matching "${searchTerm}"`;
+            } else {
+                resultsCount.textContent = `Showing ${engineers.length} engineer${engineers.length !== 1 ? 's' : ''}`;
+            }
+        }
+
         if (engineers.length === 0) {
-            engineersList.innerHTML = '<p class="text-muted">No engineers found</p>';
+            if (searchTerm) {
+                engineersList.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search text-muted" style="font-size: 48px; margin-bottom: 16px;"></i>
+                        <p class="text-muted">No engineers found matching "<strong>${this.escapeHtml(searchTerm)}</strong>"</p>
+                        <p class="text-sm text-muted">Try searching with different keywords or skills</p>
+                    </div>
+                `;
+            } else {
+                engineersList.innerHTML = '<p class="text-muted">No engineers registered yet</p>';
+            }
             return;
         }
 
@@ -1784,6 +1859,7 @@ class WebApp {
                     <div class="engineer-card-info">
                         <h5>${this.escapeHtml(engineer.username)}</h5>
                         <p>${engineer.experience || 0} years experience</p>
+                        ${engineer.phone ? `<p class="text-sm text-gray-600"><i class="fas fa-phone text-green-600"></i> <span dir="ltr">${this.escapeHtml(engineer.phone)}</span></p>` : ''}
                     </div>
                 </div>
                 
@@ -1830,10 +1906,73 @@ class WebApp {
         return '<i class="fas fa-user"></i>';
     }
 
+    // Initialize engineer search functionality
+    initializeEngineerSearch() {
+        console.log('=== INITIALIZE ENGINEER SEARCH ===');
+        
+        const searchInput = document.getElementById('engineer-search');
+        const clearButton = document.getElementById('clear-engineer-search');
+        
+        if (!searchInput) {
+            console.log('Engineer search input not found');
+            return;
+        }
+        
+        // Remove any existing event listeners by cloning the element
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        
+        // Add Enter key event listener
+        newSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed in search input');
+                e.preventDefault();
+                this.searchEngineers();
+            }
+        });
+        
+        // Add input event listener for real-time search and clear button visibility
+        newSearchInput.addEventListener('input', (e) => {
+            // Show/hide clear button
+            if (clearButton) {
+                clearButton.style.display = e.target.value ? 'block' : 'none';
+            }
+            
+            // Debounce the search
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                console.log('Auto-searching after input change');
+                this.searchEngineers();
+            }, 500); // Wait 500ms after user stops typing
+        });
+        
+        // Focus on search input when section is shown
+        newSearchInput.focus();
+        
+        console.log('Engineer search initialized with event listeners');
+    }
+    
     // Search engineers
     searchEngineers() {
+        console.log('=== SEARCH ENGINEERS CALLED ===');
         const searchInput = document.getElementById('engineer-search');
+        if (!searchInput) {
+            console.error('Search input not found');
+            return;
+        }
         const searchTerm = searchInput.value.trim();
+        console.log('Search term:', searchTerm);
+        
+        // Update search results count if exists
+        const resultsCount = document.getElementById('search-results-count');
+        if (resultsCount) {
+            if (searchTerm) {
+                resultsCount.textContent = `Searching for "${searchTerm}"...`;
+            } else {
+                resultsCount.textContent = 'Showing all engineers';
+            }
+        }
+        
         this.loadEngineersList(searchTerm);
     }
 
@@ -1888,6 +2027,7 @@ class WebApp {
                                     <h4>${this.escapeHtml(engineer.username)}</h4>
                                     <p><strong>Experience:</strong> ${engineer.experience || 0} years</p>
                                     <p><strong>Email:</strong> ${this.escapeHtml(engineer.email)}</p>
+                                    ${engineer.phone ? `<p><strong>Phone:</strong> <span dir="ltr">${this.escapeHtml(engineer.phone)}</span></p>` : ''}
                                 </div>
                             </div>
                             
@@ -1916,9 +2056,9 @@ class WebApp {
                             
                             ${engineer.cv ? `
                                 <div class="modal-section">
-                                    <h5>CV/Resume</h5>
+                                    <h5>السيرة الذاتية</h5>
                                     <button class="btn btn-primary" onclick="previewCV('${engineer.cv.path}')">
-                                        <i class="fas fa-eye"></i> Preview CV
+                                        <i class="fas fa-eye"></i> عرض السيرة الذاتية
                                     </button>
                                 </div>
                             ` : ''}
@@ -2167,6 +2307,19 @@ class WebApp {
     startEngineerExploration() {
         console.log('=== START ENGINEER EXPLORATION ===');
         
+        // Check if user is logged in and is a client
+        if (!this.currentUser) {
+            console.error('No user logged in');
+            this.showError('Please log in first');
+            return;
+        }
+        
+        if (this.currentUser.role !== 'client') {
+            console.error('User is not a client:', this.currentUser.role);
+            this.showError('This feature is only available for clients');
+            return;
+        }
+        
         // Update workflow step
         this.updateWorkflowStep(1, 'active');
         
@@ -2174,7 +2327,9 @@ class WebApp {
         this.browseEngineers();
         
         // Enable project creation after engineer exploration
-        this.enableProjectCreation();
+        setTimeout(() => {
+            this.enableProjectCreation();
+        }, 1000);
     }
 
     // Browse engineers section
@@ -2193,6 +2348,9 @@ class WebApp {
             console.error('Engineers section element not found');
             return;
         }
+        
+        // Initialize search functionality
+        this.initializeEngineerSearch();
         
         // Debug: Show current data state
         console.log('=== DEBUG: Browse Engineers ===');
@@ -4364,6 +4522,18 @@ class WebApp {
         const experience = this.currentUser.experience || 0;
         document.getElementById('engineer-experience').textContent = experience;
 
+        // Update phone
+        const phoneElement = document.getElementById('engineer-phone');
+        if (phoneElement) {
+            phoneElement.textContent = this.currentUser.phone || 'غير محدد';
+        }
+
+        // Update email
+        const emailElement = document.getElementById('engineer-email');
+        if (emailElement) {
+            emailElement.textContent = this.currentUser.email || 'غير محدد';
+        }
+
         // Update skills
         this.updateSkillsTags(this.currentUser.skills);
 
@@ -4954,6 +5124,7 @@ class WebApp {
         const fields = {
             'edit-username': this.currentUser.username || '',
             'edit-email': this.currentUser.email || '',
+            'edit-phone': this.currentUser.phone || '',
             'edit-experience': this.currentUser.experience || '',
             'edit-projects': this.currentUser.projects || '',
             'edit-skills': this.currentUser.skills || '',
@@ -5158,17 +5329,19 @@ class WebApp {
         const content = document.getElementById('cv-preview-content');
         const downloadBtn = document.getElementById('cv-download-from-modal');
         
-        // Show modal
-        modal.style.display = 'flex';
+        // Show modal using the new modal system with backdrop
+        showModal('cv-preview-modal');
         
         // Set download button path
-        downloadBtn.setAttribute('data-file-path', filePath);
+        if (downloadBtn) {
+            downloadBtn.setAttribute('data-file-path', filePath);
+        }
         
         // Show loading spinner
         content.innerHTML = `
             <div class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading CV...</p>
+                <p>جاري تحميل السيرة الذاتية...</p>
             </div>
         `;
         
@@ -5206,9 +5379,9 @@ class WebApp {
             content.innerHTML = `
                 <div class="cv-preview-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <h4>File Not Found</h4>
-                    <p>The CV file could not be found or is no longer available.</p>
-                    <p>Please try uploading the CV again.</p>
+                    <h4>الملف غير موجود</h4>
+                    <p>لا يمكن العثور على ملف السيرة الذاتية أو أنه لم يعد متاحًا.</p>
+                    <p>يرجى محاولة رفع السيرة الذاتية مرة أخرى.</p>
                 </div>
             `;
         }
@@ -5239,10 +5412,10 @@ class WebApp {
             container.innerHTML = `
                 <div class="cv-preview-error">
                     <i class="fas fa-file-alt"></i>
-                    <h4>Preview Not Available</h4>
-                    <p>Preview is not available for ${fileName}.</p>
-                    <p>File type: ${fileInfo.type}</p>
-                    <p>Please download the file to view its contents.</p>
+                    <h4>المعاينة غير متاحة</h4>
+                    <p>المعاينة غير متاحة لـ ${fileName}.</p>
+                    <p>نوع الملف: ${fileInfo.type}</p>
+                    <p>يرجى تحميل الملف لعرض محتوياته.</p>
                 </div>
             `;
         } else {
@@ -5250,9 +5423,9 @@ class WebApp {
             container.innerHTML = `
                 <div class="cv-preview-error">
                     <i class="fas fa-file"></i>
-                    <h4>Preview Not Supported</h4>
-                    <p>Preview is not supported for this file type: ${fileInfo.type}</p>
-                    <p>Please download the file to view its contents.</p>
+                    <h4>المعاينة غير مدعومة</h4>
+                    <p>المعاينة غير مدعومة لهذا النوع من الملفات: ${fileInfo.type}</p>
+                    <p>يرجى تحميل الملف لعرض محتوياته.</p>
                 </div>
             `;
         }
@@ -5260,8 +5433,8 @@ class WebApp {
 
     // Close CV preview modal
     closeCVPreview() {
-        const modal = document.getElementById('cv-preview-modal');
-        modal.style.display = 'none';
+        // Use the new modal close system
+        closeModal('cv-preview-modal');
         // Remove keyboard listener
         document.removeEventListener('keydown', this.handleModalKeydown);
     }
@@ -5532,9 +5705,17 @@ class WebApp {
         }
         
         const tableRows = allUsers.map(user => {
-            const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()) : [];
+            // Handle skills - it might be a string, array, or undefined
+            let skillsArray = [];
+            if (user.skills) {
+                if (typeof user.skills === 'string') {
+                    skillsArray = user.skills.split(',').map(s => s.trim());
+                } else if (Array.isArray(user.skills)) {
+                    skillsArray = user.skills;
+                }
+            }
             const skillsDisplay = skillsArray.length > 0 ? skillsArray.slice(0, 2).join(', ') + (skillsArray.length > 2 ? '...' : '') : '-';
-            const createdDate = new Date(user.createdAt).toLocaleDateString();
+            const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
             
             return `
                 <tr class="hover:bg-slate-50">
@@ -5647,8 +5828,16 @@ class WebApp {
             return;
         }
         
-        const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()) : [];
-        const createdDate = new Date(user.createdAt).toLocaleString();
+        // Handle skills - it might be a string, array, or undefined
+        let skillsArray = [];
+        if (user.skills) {
+            if (typeof user.skills === 'string') {
+                skillsArray = user.skills.split(',').map(s => s.trim());
+            } else if (Array.isArray(user.skills)) {
+                skillsArray = user.skills;
+            }
+        }
+        const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleString() : '-';
         
         const userDetails = `
             <div class="space-y-6">
@@ -5914,6 +6103,37 @@ window.showPage = function(pageId) {
     }
 };
 
+// Manual redirect to dashboard for testing
+window.goToDashboardManual = function() {
+    console.log('=== MANUAL DASHBOARD REDIRECT ===');
+    if (window.webApp && window.webApp.currentUser) {
+        console.log('Current user:', window.webApp.currentUser);
+        window.webApp.showPage('dashboard');
+    } else {
+        console.log('No user logged in');
+    }
+};
+
+// Test login and redirect
+window.testLoginRedirect = function() {
+    console.log('=== TEST LOGIN REDIRECT ===');
+    
+    // Simulate admin login
+    const testUser = {
+        id: 1,
+        username: "admin",
+        email: "admin@example.com",
+        role: "admin"
+    };
+    
+    if (window.webApp) {
+        console.log('Logging in test user...');
+        window.webApp.loginUser(testUser);
+    } else {
+        console.error('WebApp not initialized');
+    }
+};
+
 // Global language toggle function
 
 // Global showLogin function
@@ -5994,8 +6214,70 @@ document.addEventListener('keydown', function(e) {
         if (activeModal) {
             closeModal(activeModal.id);
         }
+        // Also check for special modals
+        const specialModals = ['project-steps-modal', 'client-project-steps-modal', 'reassign-project-modal', 'project-form-modal'];
+        specialModals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.style.display !== 'none') {
+                closeSpecialModal(modalId);
+            }
+        });
     }
 });
+
+// Function to show special modals with backdrop
+window.showSpecialModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Create and show backdrop
+        const backdrop = createModalBackdrop();
+        backdrop.classList.add('active');
+        
+        // Show modal
+        modal.style.display = 'flex';
+        if (!modal.classList.contains('flex')) {
+            modal.classList.add('flex');
+        }
+        
+        // Lock body scroll
+        document.body.classList.add('modal-open');
+        
+        // Add click outside to close
+        backdrop.onclick = function() {
+            closeSpecialModal(modalId);
+        };
+        
+        // Store backdrop reference
+        modal.dataset.backdrop = 'true';
+    }
+};
+
+// Function to close special modals with backdrop
+window.closeSpecialModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Hide modal
+        modal.style.display = 'none';
+        modal.classList.remove('flex');
+        
+        // Remove backdrop
+        const backdrop = document.getElementById('modal-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('active');
+            setTimeout(() => {
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            }, 300);
+        }
+        
+        // Unlock body scroll
+        document.body.classList.remove('modal-open');
+        
+        // Clear backdrop reference
+        delete modal.dataset.backdrop;
+    }
+};
 
 // Update last updated time in admin control panel
 window.updateLastUpdatedTime = function() {
@@ -6012,34 +6294,41 @@ window.updateLastUpdatedTime = function() {
 };
 
 // Enhanced mock data generation with feedback
-window.generateMockData = function() {
+window.generateMockData = async function() {
     if (window.webApp) {
         // Show loading state
         const button = event.target;
         const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري الإنشاء...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin ml-1"></i> جاري التحميل...';
         button.disabled = true;
         
-        // Generate mock data using the internal function
-        const success = generateMockDataInternal();
-        
-        // Update last updated time
-        updateLastUpdatedTime();
-        
-        // Show appropriate message
-        setTimeout(() => {
+        try {
+            // Generate mock data using the internal function (now async)
+            const success = await generateMockDataInternal();
+            
+            // Update last updated time
+            updateLastUpdatedTime();
+            
+            // Show appropriate message
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                if (success) {
+                    window.webApp.showSuccess('تم تحميل البيانات التجريبية بنجاح من mock-data.json!');
+                    // Refresh the admin dashboard to show new data
+                    if (window.webApp.currentUser && window.webApp.currentUser.role === 'admin') {
+                        window.webApp.loadAdminData();
+                    }
+                } else {
+                    window.webApp.showError('فشل تحميل البيانات. تحقق من وجود ملف mock-data.json');
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error in generateMockData:', error);
             button.innerHTML = originalText;
             button.disabled = false;
-            if (success) {
-                window.webApp.showSuccess('تم إنشاء البيانات التجريبية بنجاح!\n\nتم إضافة:\n- 5 مهندسين\n- 3 عملاء\n- 3 مشاريع');
-                // Refresh the admin dashboard to show new data
-                if (window.webApp.currentUser && window.webApp.currentUser.role === 'admin') {
-                    window.webApp.loadAdminData();
-                }
-            } else {
-                window.webApp.showError('فشل في إنشاء البيانات التجريبية. تأكد من تسجيل الدخول كمدير.');
-            }
-        }, 1000);
+            window.webApp.showError('خطأ: ' + error.message);
+        }
     }
 };
 
@@ -6158,6 +6447,23 @@ window.closeCVPreview = function() {
 window.searchEngineers = function() {
     if (window.webApp) {
         window.webApp.searchEngineers();
+    }
+};
+
+window.clearEngineerSearch = function() {
+    const searchInput = document.getElementById('engineer-search');
+    const clearButton = document.getElementById('clear-engineer-search');
+    
+    if (searchInput) {
+        searchInput.value = '';
+        // Hide clear button
+        if (clearButton) {
+            clearButton.style.display = 'none';
+        }
+        // Trigger search to show all engineers
+        if (window.webApp) {
+            window.webApp.searchEngineers();
+        }
     }
 };
 
@@ -6405,9 +6711,71 @@ window.showClientDashboard = function() {
     }
 };
 
+// Simple function to directly explore engineers
+window.exploreEngineers = function() {
+    console.log('=== EXPLORE ENGINEERS DIRECTLY ===');
+    
+    if (!window.webApp) {
+        alert('Application not initialized. Please refresh the page.');
+        return;
+    }
+    
+    if (!window.webApp.currentUser) {
+        alert('Please log in first');
+        return;
+    }
+    
+    if (window.webApp.currentUser.role !== 'client') {
+        alert('This feature is only available for clients');
+        return;
+    }
+    
+    // Show client dashboard if not visible
+    const clientDashboard = document.getElementById('client-dashboard');
+    if (clientDashboard) {
+        clientDashboard.style.display = 'block';
+    }
+    
+    // Directly show and initialize engineers browser
+    const engineersBrowser = document.getElementById('engineers-browser');
+    if (engineersBrowser) {
+        engineersBrowser.style.display = 'block';
+        window.webApp.initializeEngineerSearch();
+        window.webApp.loadEngineersList();
+        
+        // Scroll to the section
+        setTimeout(() => {
+            engineersBrowser.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    } else {
+        console.error('Engineers browser section not found');
+        alert('Engineers section not found. Please refresh the page.');
+    }
+};
+
     // Direct function to show engineer exploration
 window.showEngineerExploration = function() {
     console.log('=== SHOW ENGINEER EXPLORATION DIRECT ===');
+    
+    // Check if webApp exists and user is logged in
+    if (!window.webApp) {
+        console.error('WebApp not initialized');
+        alert('Please refresh the page and try again');
+        return;
+    }
+    
+    if (!window.webApp.currentUser) {
+        console.error('No user logged in');
+        alert('Please log in first');
+        return;
+    }
+    
+    // Check if user is a client
+    if (window.webApp.currentUser.role !== 'client') {
+        console.error('Only clients can explore engineers');
+        alert('This feature is only available for clients');
+        return;
+    }
     
     // Force show client dashboard
     const clientDashboard = document.getElementById('client-dashboard');
@@ -6430,7 +6798,7 @@ window.showEngineerExploration = function() {
         console.log('Engineer exploration button shown');
     }
     
-    // Show engineers browser section
+    // Show engineers browser section directly
     const engineersBrowser = document.getElementById('engineers-browser');
     if (engineersBrowser) {
         engineersBrowser.style.display = 'block';
@@ -6440,16 +6808,19 @@ window.showEngineerExploration = function() {
         engineersBrowser.style.overflow = 'visible';
         console.log('Engineers browser shown');
         console.log('Engineers browser style:', engineersBrowser.style.display);
+    } else {
+        console.error('Engineers browser section not found');
     }
     
     // Add test engineers if none exist
-    if (window.webApp && (!window.webApp.data.registeredUsers || window.webApp.data.registeredUsers.length === 0)) {
+    if (window.webApp && (!window.webApp.data.registeredUsers || window.webApp.data.registeredUsers.filter(u => u.role === 'engineer').length === 0)) {
         console.log('No engineers found, adding test engineers...');
         window.webApp.addTestEngineers();
     }
     
-    // Load engineers list
+    // Initialize search and load engineers list
     if (window.webApp) {
+        window.webApp.initializeEngineerSearch();
         window.webApp.loadEngineersList();
     }
     
@@ -6875,7 +7246,7 @@ window.goToDashboard = function() {
         } else if (user.role === 'client') {
             window.webApp.showClientDashboard();
         } else {
-            window.webApp.updateDashboard();
+        window.webApp.updateDashboard();
         }
     }
 };
@@ -7162,14 +7533,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Re-setup file upload previews when project form modal is opened
 window.openProjectForm = function() {
-    // Show the modal
+    // Use the special modal function with backdrop
+    showSpecialModal('project-form-modal');
+    
+    // Add smooth animation
     const modal = document.getElementById('project-form-modal');
     if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        // Add smooth animation
         setTimeout(() => {
-            modal.querySelector('.bg-white').style.transform = 'scale(1)';
+            const modalContent = modal.querySelector('.bg-white');
+            if (modalContent) {
+                modalContent.style.transform = 'scale(1)';
+            }
         }, 10);
     }
     
@@ -7188,8 +7562,7 @@ window.closeProjectForm = function() {
             modalContent.style.transform = 'scale(0.95)';
         }
         setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            closeSpecialModal('project-form-modal');
         }, 200);
     }
 };
@@ -7198,6 +7571,31 @@ window.closeProjectForm = function() {
 if (window.openProjectForm) {
     window.originalOpenProjectForm = window.openProjectForm;
 }
+
+// Functions for other special modals
+window.showProjectStepsModal = function() {
+    showSpecialModal('project-steps-modal');
+};
+
+window.closeProjectStepsModal = function() {
+    closeSpecialModal('project-steps-modal');
+};
+
+window.showClientProjectStepsModal = function() {
+    showSpecialModal('client-project-steps-modal');
+};
+
+window.closeClientProjectStepsModal = function() {
+    closeSpecialModal('client-project-steps-modal');
+};
+
+window.showReassignProjectModal = function() {
+    showSpecialModal('reassign-project-modal');
+};
+
+window.closeReassignProjectModal = function() {
+    closeSpecialModal('reassign-project-modal');
+};
 
 // Function to toggle admin debug buttons visibility
 window.toggleAdminDebugButtons = function() {
@@ -7246,10 +7644,34 @@ function toggleExpandableSection(sectionName) {
 }
 
 // Mock Data Generator for Project Presentation
-function generateMockDataInternal() {
-
-    const mockData = {
-        engineers: [
+async function generateMockDataInternal() {
+    let mockData = null;
+    
+    // Try to load from external file first (works with local server)
+    try {
+        console.log('Attempting to load mock data from external file...');
+        const response = await fetch('mock-data.json');
+        if (response.ok) {
+            mockData = await response.json();
+            console.log('Mock data loaded successfully from file:', mockData);
+        }
+    } catch (fetchError) {
+        console.log('Could not load external file (CORS/file protocol issue), using embedded data...');
+    }
+    
+    // If external loading failed, use embedded data
+    if (!mockData) {
+        console.log('Using embedded mock data...');
+        mockData = getEmbeddedMockData();
+        console.log('Mock data loaded from embedded source:', mockData);
+    }
+    
+    try {
+        
+        // The old hardcoded data is now replaced by external JSON
+        /* OLD HARDCODED DATA - NOW LOADED FROM mock-data.json
+        const mockData = {
+            engineers: [
             {
                 id: 1,
                 username: "ahmed_engineer",
@@ -7505,48 +7927,478 @@ function generateMockDataInternal() {
             }
         ]
     };
+    */ // END OF OLD HARDCODED DATA
 
-    // Add mock data to existing data
-    if (window.webApp && window.webApp.data) {
-        // Add engineers
-        if (!window.webApp.data.registeredUsers) {
-            window.webApp.data.registeredUsers = [];
+        // Add mock data to existing data
+        if (window.webApp && window.webApp.data) {
+            // Add engineers
+            if (!window.webApp.data.registeredUsers) {
+                window.webApp.data.registeredUsers = [];
+            }
+            
+            // Add mock engineers
+            if (mockData.engineers && Array.isArray(mockData.engineers)) {
+                mockData.engineers.forEach(engineer => {
+                    if (!window.webApp.data.registeredUsers.find(u => u.email === engineer.email)) {
+                        window.webApp.data.registeredUsers.push(engineer);
+                    }
+                });
+            }
+
+            // Add mock clients
+            if (mockData.clients && Array.isArray(mockData.clients)) {
+                mockData.clients.forEach(client => {
+                    if (!window.webApp.data.registeredUsers.find(u => u.email === client.email)) {
+                        window.webApp.data.registeredUsers.push(client);
+                    }
+                });
+            }
+
+            // Add mock projects
+            if (!window.webApp.data.projects) {
+                window.webApp.data.projects = [];
+            }
+            
+            if (mockData.projects && Array.isArray(mockData.projects)) {
+                mockData.projects.forEach(project => {
+                    if (!window.webApp.data.projects.find(p => p.id === project.id)) {
+                        window.webApp.data.projects.push(project);
+                    }
+                });
+            }
+
+            // Add project requests if provided
+            if (mockData.projectRequests && Array.isArray(mockData.projectRequests)) {
+                if (!window.webApp.data.projectRequests) {
+                    window.webApp.data.projectRequests = [];
+                }
+                mockData.projectRequests.forEach(request => {
+                    if (!window.webApp.data.projectRequests.find(r => r.id === request.id)) {
+                        window.webApp.data.projectRequests.push(request);
+                    }
+                });
+            }
+
+            // Save to localStorage
+            localStorage.setItem('appData', JSON.stringify(window.webApp.data));
+            
+            // Refresh the admin dashboard if visible
+            if (window.webApp.currentUser && window.webApp.currentUser.role === 'admin') {
+                window.webApp.showAdminDashboard();
+            }
+            
+            console.log('Mock data added successfully!');
+            return true; // Success
+        } else {
+            console.error('خطأ: لا يمكن الوصول إلى البيانات. تأكد من تسجيل الدخول كمدير.');
+            return false; // Error
         }
-        
-        // Add mock engineers
-        mockData.engineers.forEach(engineer => {
-            if (!window.webApp.data.registeredUsers.find(u => u.id === engineer.id)) {
-                window.webApp.data.registeredUsers.push(engineer);
-            }
-        });
-
-        // Add mock clients
-        mockData.clients.forEach(client => {
-            if (!window.webApp.data.registeredUsers.find(u => u.id === client.id)) {
-                window.webApp.data.registeredUsers.push(client);
-            }
-        });
-
-        // Add mock projects
-        if (!window.webApp.data.projects) {
-            window.webApp.data.projects = [];
-        }
-        
-        mockData.projects.forEach(project => {
-            if (!window.webApp.data.projects.find(p => p.id === project.id)) {
-                window.webApp.data.projects.push(project);
-            }
-        });
-
-        // Save to localStorage
-        localStorage.setItem('appData', JSON.stringify(window.webApp.data));
-        
-        // Update the webApp data
-        window.webApp.data = window.webApp.data;
-        
-        return true; // Success
-    } else {
-        console.error('خطأ: لا يمكن الوصول إلى البيانات. تأكد من تسجيل الدخول كمدير.');
-        return false; // Error
+    } catch (error) {
+        console.error('Error processing mock data:', error);
+        return false;
     }
+}
+
+// Embedded mock data function
+function getEmbeddedMockData() {
+    return {
+        "engineers": [
+            {
+                "id": 1,
+                "username": "ahmed_engineer",
+                "email": "ahmed.engineer@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "أحمد",
+                "lastName": "المعمار",
+                "phone": "+966501234567",
+                "city": "الرياض",
+                "experience": 8,
+                "skills": "التصميم المعماري, الرسم الهندسي, إدارة المشاريع, AutoCAD, Revit",
+                "bio": "مهندس معماري محترف مع 8 سنوات من الخبرة في تصميم المباني السكنية والتجارية. متخصص في التصميم المستدام والحديث.",
+                "projects": "تصميم 50+ مشروع سكني وتجاري في المملكة العربية السعودية",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-01-15T00:00:00Z"
+            },
+            {
+                "id": 2,
+                "username": "sara_architect",
+                "email": "sara.architect@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "سارة",
+                "lastName": "البناء",
+                "phone": "+966502345678",
+                "city": "جدة",
+                "experience": 12,
+                "skills": "التصميم الداخلي, التخطيط الحضري, الاستدامة, SketchUp, 3D Max",
+                "bio": "مهندسة معمارية متخصصة في التصميم الداخلي والتخطيط الحضري. لديها خبرة واسعة في المشاريع الكبيرة.",
+                "projects": "إدارة وتصميم مشاريع حكومية وخاصة بقيمة 100+ مليون ريال",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-01-20T00:00:00Z"
+            },
+            {
+                "id": 3,
+                "username": "mohammed_civil",
+                "email": "mohammed.civil@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "محمد",
+                "lastName": "الهندسة",
+                "phone": "+966503456789",
+                "city": "الدمام",
+                "experience": 15,
+                "skills": "الهندسة المدنية, البنية التحتية, إدارة الإنشاءات, SAP2000, ETABS",
+                "bio": "مهندس مدني خبير في البنية التحتية والمشاريع الكبيرة. متخصص في الجسور والطرق والأنفاق.",
+                "projects": "تصميم وتنفيذ 30+ مشروع بنية تحتية في المنطقة الشرقية",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-01-25T00:00:00Z"
+            },
+            {
+                "id": 4,
+                "username": "fatima_design",
+                "email": "fatima.design@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "فاطمة",
+                "lastName": "التصميم",
+                "phone": "+966504567890",
+                "city": "مكة المكرمة",
+                "experience": 6,
+                "skills": "التصميم المعماري, الرسم الفني, التصميم الرقمي, AutoCAD, Photoshop",
+                "bio": "مهندسة معمارية شابة متخصصة في التصميم الحديث والمبتكر. لديها رؤية إبداعية في التصميم.",
+                "projects": "تصميم 25+ فيلا ومنزل سكني بتصاميم عصرية ومبتكرة",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-02-01T00:00:00Z"
+            },
+            {
+                "id": 5,
+                "username": "khalid_construction",
+                "email": "khalid.construction@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "خالد",
+                "lastName": "الإنشاءات",
+                "phone": "+966505678901",
+                "city": "المدينة المنورة",
+                "experience": 20,
+                "skills": "إدارة الإنشاءات, التخطيط, مراقبة الجودة, Primavera, MS Project",
+                "bio": "مهندس إنشاءات مخضرم مع 20 سنة من الخبرة في إدارة المشاريع الكبيرة والمعقدة.",
+                "projects": "إدارة 100+ مشروع إنشائي بقيمة إجمالية 500+ مليون ريال",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-02-05T00:00:00Z"
+            },
+            {
+                "id": 6,
+                "username": "ali_structural",
+                "email": "ali.structural@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "علي",
+                "lastName": "الإنشائي",
+                "phone": "+966506789012",
+                "city": "تبوك",
+                "experience": 10,
+                "skills": "الهندسة الإنشائية, التحليل الإنشائي, التصميم الزلزالي, SAFE, Robot",
+                "bio": "مهندس إنشائي متخصص في تصميم المباني المقاومة للزلازل والظروف الجوية القاسية.",
+                "projects": "تصميم إنشائي لـ 40+ مبنى سكني وتجاري في مختلف مناطق المملكة",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-02-10T00:00:00Z"
+            },
+            {
+                "id": 7,
+                "username": "layla_interior",
+                "email": "layla.interior@example.com",
+                "password": "password123",
+                "role": "engineer",
+                "firstName": "ليلى",
+                "lastName": "الديكور",
+                "phone": "+966507890123",
+                "city": "الخبر",
+                "experience": 7,
+                "skills": "التصميم الداخلي, الديكور, الإضاءة, 3D Visualization, Lumion",
+                "bio": "مصممة داخلية محترفة متخصصة في التصميم الفاخر والعصري للمنازل والمكاتب.",
+                "projects": "تصميم داخلي لـ 60+ مشروع سكني وتجاري فاخر",
+                "photo": null,
+                "cv": null,
+                "createdAt": "2024-02-15T00:00:00Z"
+            }
+        ],
+        "clients": [
+            {
+                "id": 1,
+                "username": "omar_client",
+                "email": "omar.client@example.com",
+                "password": "password123",
+                "role": "client",
+                "firstName": "عمر",
+                "lastName": "العميل",
+                "phone": "+966506789012",
+                "city": "الرياض",
+                "company": "شركة عمر التجارية",
+                "createdAt": "2024-01-10T00:00:00Z"
+            },
+            {
+                "id": 2,
+                "username": "nora_client",
+                "email": "nora.client@example.com",
+                "password": "password123",
+                "role": "client",
+                "firstName": "نورا",
+                "lastName": "الاستثمار",
+                "phone": "+966507890123",
+                "city": "جدة",
+                "company": "مجموعة نورا الاستثمارية",
+                "createdAt": "2024-01-12T00:00:00Z"
+            },
+            {
+                "id": 3,
+                "username": "saud_client",
+                "email": "saud.client@example.com",
+                "password": "password123",
+                "role": "client",
+                "firstName": "سعود",
+                "lastName": "العقار",
+                "phone": "+966508901234",
+                "city": "الدمام",
+                "company": "شركة سعود العقارية",
+                "createdAt": "2024-01-18T00:00:00Z"
+            },
+            {
+                "id": 4,
+                "username": "maha_client",
+                "email": "maha.client@example.com",
+                "password": "password123",
+                "role": "client",
+                "firstName": "مها",
+                "lastName": "التطوير",
+                "phone": "+966509012345",
+                "city": "المدينة المنورة",
+                "company": "شركة مها للتطوير العقاري",
+                "createdAt": "2024-01-22T00:00:00Z"
+            },
+            {
+                "id": 5,
+                "username": "faisal_client",
+                "email": "faisal.client@example.com",
+                "password": "password123",
+                "role": "client",
+                "firstName": "فيصل",
+                "lastName": "الاستثمارات",
+                "phone": "+966501234567",
+                "city": "مكة المكرمة",
+                "company": "مجموعة فيصل الاستثمارية",
+                "createdAt": "2024-01-28T00:00:00Z"
+            }
+        ],
+        "projects": [
+            {
+                "id": 1,
+                "clientId": 1,
+                "engineerId": 1,
+                "title": "فيلا عائلية حديثة",
+                "description": "تصميم فيلا عائلية حديثة بمساحة 400 متر مربع مع حديقة وموقف سيارات",
+                "address": "حي النرجس، الرياض",
+                "buildingType": "فيلا",
+                "buildingSize": 400,
+                "lotSize": 600,
+                "floorsCount": 2,
+                "bedroomsCount": 4,
+                "bathroomsCount": 3,
+                "parkingSpaces": 2,
+                "budget": 800000,
+                "timeline": "6-12 شهر",
+                "startDate": "2024-03-01",
+                "status": "active",
+                "createdAt": "2024-02-01T00:00:00Z",
+                "steps": [
+                    {
+                        "id": 1,
+                        "title": "التصميم الأولي",
+                        "description": "إنشاء التصميم الأولي والرسومات الأساسية",
+                        "duration": "2-3 أسابيع",
+                        "cost": 50000,
+                        "status": "completed",
+                        "images": []
+                    },
+                    {
+                        "id": 2,
+                        "title": "الرسومات التنفيذية",
+                        "description": "إعداد الرسومات التنفيذية التفصيلية",
+                        "duration": "3-4 أسابيع",
+                        "cost": 75000,
+                        "status": "in-progress",
+                        "images": []
+                    },
+                    {
+                        "id": 3,
+                        "title": "الحصول على التراخيص",
+                        "description": "إعداد الملفات المطلوبة للحصول على تراخيص البناء",
+                        "duration": "4-6 أسابيع",
+                        "cost": 25000,
+                        "status": "pending",
+                        "images": []
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "clientId": 2,
+                "engineerId": 2,
+                "title": "مبنى سكني متعدد الطوابق",
+                "description": "تصميم مبنى سكني من 8 طوابق مع 24 شقة سكنية",
+                "address": "شارع التحلية، جدة",
+                "buildingType": "مبنى سكني",
+                "buildingSize": 2000,
+                "lotSize": 800,
+                "floorsCount": 8,
+                "bedroomsCount": 24,
+                "bathroomsCount": 24,
+                "parkingSpaces": 30,
+                "budget": 5000000,
+                "timeline": "1-2 سنة",
+                "startDate": "2024-04-01",
+                "status": "pending",
+                "createdAt": "2024-02-05T00:00:00Z",
+                "steps": [
+                    {
+                        "id": 1,
+                        "title": "دراسة الجدوى",
+                        "description": "إعداد دراسة جدوى شاملة للمشروع",
+                        "duration": "3-4 أسابيع",
+                        "cost": 100000,
+                        "status": "in-progress",
+                        "images": []
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "clientId": 3,
+                "engineerId": 3,
+                "title": "مجمع تجاري",
+                "description": "تصميم مجمع تجاري حديث مع محلات ومكاتب ومواقف",
+                "address": "طريق الملك فهد، الدمام",
+                "buildingType": "تجاري",
+                "buildingSize": 5000,
+                "lotSize": 3000,
+                "floorsCount": 4,
+                "bedroomsCount": 0,
+                "bathroomsCount": 20,
+                "parkingSpaces": 100,
+                "budget": 10000000,
+                "timeline": "أكثر من سنتين",
+                "startDate": "2024-05-01",
+                "status": "active",
+                "createdAt": "2024-02-10T00:00:00Z",
+                "steps": [
+                    {
+                        "id": 1,
+                        "title": "التصميم المعماري",
+                        "description": "إنشاء التصميم المعماري الكامل للمجمع",
+                        "duration": "6-8 أسابيع",
+                        "cost": 250000,
+                        "status": "completed",
+                        "images": []
+                    },
+                    {
+                        "id": 2,
+                        "title": "التصميم الإنشائي",
+                        "description": "إعداد التصميم الإنشائي والحسابات الهندسية",
+                        "duration": "4-6 أسابيع",
+                        "cost": 200000,
+                        "status": "in-progress",
+                        "images": []
+                    }
+                ]
+            },
+            {
+                "id": 4,
+                "clientId": 4,
+                "engineerId": 4,
+                "title": "منتجع سياحي",
+                "description": "تصميم منتجع سياحي فاخر مع شاليهات ومرافق ترفيهية",
+                "address": "الساحل الغربي، جدة",
+                "buildingType": "منتجع",
+                "buildingSize": 10000,
+                "lotSize": 20000,
+                "floorsCount": 2,
+                "bedroomsCount": 50,
+                "bathroomsCount": 50,
+                "parkingSpaces": 150,
+                "budget": 25000000,
+                "timeline": "أكثر من سنتين",
+                "startDate": "2024-06-01",
+                "status": "pending",
+                "createdAt": "2024-02-15T00:00:00Z",
+                "steps": []
+            },
+            {
+                "id": 5,
+                "clientId": 5,
+                "engineerId": 5,
+                "title": "برج مكتبي",
+                "description": "تصميم برج مكتبي حديث من 20 طابق في قلب المدينة",
+                "address": "حي الأعمال، الرياض",
+                "buildingType": "برج مكتبي",
+                "buildingSize": 15000,
+                "lotSize": 2000,
+                "floorsCount": 20,
+                "bedroomsCount": 0,
+                "bathroomsCount": 80,
+                "parkingSpaces": 200,
+                "budget": 50000000,
+                "timeline": "أكثر من سنتين",
+                "startDate": "2024-07-01",
+                "status": "active",
+                "createdAt": "2024-02-20T00:00:00Z",
+                "steps": [
+                    {
+                        "id": 1,
+                        "title": "التصميم الأولي",
+                        "description": "إنشاء المفهوم الأولي والتصميم المبدئي",
+                        "duration": "4-6 أسابيع",
+                        "cost": 500000,
+                        "status": "completed",
+                        "images": []
+                    }
+                ]
+            }
+        ],
+        "projectRequests": [
+            {
+                "id": 1,
+                "projectId": 1,
+                "clientId": 1,
+                "engineerId": 1,
+                "status": "accepted",
+                "message": "نود العمل معكم في هذا المشروع المميز",
+                "createdAt": "2024-02-01T00:00:00Z"
+            },
+            {
+                "id": 2,
+                "projectId": 2,
+                "clientId": 2,
+                "engineerId": 2,
+                "status": "pending",
+                "message": "مشروع طموح نتطلع للعمل عليه",
+                "createdAt": "2024-02-05T00:00:00Z"
+            },
+            {
+                "id": 3,
+                "projectId": 3,
+                "clientId": 3,
+                "engineerId": 3,
+                "status": "accepted",
+                "message": "خبرتنا في المشاريع التجارية ستضيف قيمة كبيرة",
+                "createdAt": "2024-02-10T00:00:00Z"
+            }
+        ]
+    };
 }

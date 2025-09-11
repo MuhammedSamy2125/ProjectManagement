@@ -32,20 +32,21 @@
             scroll-behavior: smooth;
         }
         
-        /* Modal Background Effects */
+        /* Enhanced Modal Background Effects */
         .modal-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 40;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease-in-out;
+            cursor: pointer;
         }
         
         .modal-backdrop.active {
@@ -86,15 +87,37 @@
             overflow: hidden;
             transform: translateY(20px);
             transition: transform 0.3s ease-in-out;
+            position: relative;
+            z-index: 51;
         }
         
         .modal.active .modal-content {
             transform: translateY(0);
         }
         
-        /* Body scroll lock when modal is open */
+        /* Body and content disable when modal is open */
         body.modal-open {
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        /* Disable all interactions except modal */
+        body.modal-open > *:not(.modal-backdrop):not(.modal):not([id*="modal"]) {
+            pointer-events: none;
+            user-select: none;
+            filter: brightness(0.7);
+            transition: filter 0.3s ease;
+        }
+        
+        /* Ensure modals and their content remain interactive */
+        .modal,
+        .modal *,
+        .modal-backdrop,
+        [id*="modal"],
+        [id*="modal"] * {
+            pointer-events: auto !important;
+            filter: none !important;
         }
     </style>
     
@@ -223,7 +246,7 @@
                         </div>
                         
                         <!-- Quick Stats -->
-                        <div class="hidden md:flex space-x-3 space-x-reverse">
+                        <!-- <div class="hidden md:flex space-x-3 space-x-reverse">
                             <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-2 border border-white border-opacity-20">
                                 <div class="text-sm font-bold text-white">500+</div>
                                 <div class="text-xs text-blue-200">مهندس</div>
@@ -236,17 +259,17 @@
                                 <div class="text-sm font-bold text-white">98%</div>
                                 <div class="text-xs text-blue-200">نجاح</div>
                             </div>
-                        </div>
+                        </div> -->
                         
                         <!-- Action Buttons -->
-                        <div class="flex space-x-2 space-x-reverse">
+                        <!-- <div class="flex space-x-2 space-x-reverse">
                             <button class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center" onclick="showLogin()">
                                 <i class="fas fa-rocket ml-1"></i> ابدأ
                             </button>
                             <button class="border border-white text-white hover:bg-white hover:text-blue-900 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center" onclick="toggleExpandableSection('features')">
                                 <i class="fas fa-info-circle ml-1"></i> المزيد
                             </button>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -340,10 +363,10 @@
                                 ميزات المنصة
                             </h2>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <!-- <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <i class="fas fa-users text-blue-500 ml-2"></i>
                                     <span class="text-sm font-medium text-gray-700">أدوار متعددة</span>
-                                </div>
+                                </div> -->
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <i class="fas fa-tasks text-green-500 ml-2"></i>
                                     <span class="text-sm font-medium text-gray-700">إدارة المشاريع</span>
@@ -352,10 +375,10 @@
                                     <i class="fas fa-mobile-alt text-purple-500 ml-2"></i>
                                     <span class="text-sm font-medium text-gray-700">تصميم متجاوب</span>
                                 </div>
-                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <!-- <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <i class="fas fa-database text-yellow-500 ml-2"></i>
                                     <span class="text-sm font-medium text-gray-700">قاعدة بيانات JSON</span>
-                                </div>
+                                </div> -->
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                     <i class="fas fa-search text-red-500 ml-2"></i>
                                     <span class="text-sm font-medium text-gray-700">بحث ذكي</span>
@@ -888,6 +911,12 @@
                         </div>
                         
                         <div class="form-group">
+                            <label for="register-phone">رقم الهاتف</label>
+                            <input type="tel" id="register-phone" name="phone" placeholder="+966 5X XXX XXXX" required pattern="^\+?[0-9\s\-\(\)]+$" dir="ltr">
+                            <small class="form-help">أدخل رقم هاتفك مع رمز الدولة</small>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="register-password">كلمة المرور</label>
                             <input type="password" id="register-password" name="password" required>
                         </div>
@@ -978,7 +1007,7 @@
                              <button class="btn btn-secondary" onclick="logout()">
                                  <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                              </button>
-                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="showEngineerExploration()" style="margin-left: var(--spacing-sm); display: none;">
+                                                         <button id="explore-engineers-btn" class="btn btn-success" onclick="exploreEngineers()" style="margin-left: var(--spacing-sm); display: none;">
                                 <i class="fas fa-search"></i> استكشف المهندسين
                              </button>
                              
@@ -1061,16 +1090,24 @@
                                                      </div>
                                                  </div>
                                              </div>
-                                             <div class="flex-1 text-center md:text-left">
-                                                 <h2 id="engineer-name" class="text-3xl font-bold text-slate-900 mb-2">Engineer Name</h2>
-                                                 <div class="flex items-center justify-center md:justify-start gap-2 mb-4">
-                                                     <i class="fas fa-briefcase text-blue-600"></i>
-                                                     <span id="engineer-experience" class="text-slate-600 font-medium">0</span>
-                                                     <span class="text-slate-600">years of experience</span>
-                                                 </div>
-                                                 <div class="skills-tags-enhanced flex flex-wrap gap-2 justify-center md:justify-start" id="skills-tags">
-                                                     <!-- Skills will be populated here -->
-                                                 </div>
+                                            <div class="flex-1 text-center md:text-left">
+                                                <h2 id="engineer-name" class="text-3xl font-bold text-slate-900 mb-2">Engineer Name</h2>
+                                                <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                                    <i class="fas fa-briefcase text-blue-600"></i>
+                                                    <span id="engineer-experience" class="text-slate-600 font-medium">0</span>
+                                                    <span class="text-slate-600">years of experience</span>
+                                                </div>
+                                                <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                                    <i class="fas fa-phone text-green-600"></i>
+                                                    <span id="engineer-phone" class="text-slate-600 font-medium" dir="ltr">+966 50 XXX XXXX</span>
+                                                </div>
+                                                <div class="flex items-center justify-center md:justify-start gap-2 mb-4">
+                                                    <i class="fas fa-envelope text-purple-600"></i>
+                                                    <span id="engineer-email" class="text-slate-600 font-medium">email@example.com</span>
+                                                </div>
+                                                <div class="skills-tags-enhanced flex flex-wrap gap-2 justify-center md:justify-start" id="skills-tags">
+                                                    <!-- Skills will be populated here -->
+                                                </div>
                                              </div>
                                          </div>
                                      </div>
@@ -1086,14 +1123,14 @@
                                                  <h3 class="text-xl font-semibold text-slate-900">CV/Resume</h3>
                                              </div>
                                              <div class="cv-section-enhanced">
-                                                 <div id="cv-actions" class="flex gap-3" style="display: none;">
-                                                     <button id="cv-preview" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2" onclick="previewCV(this.getAttribute('data-file-path'))">
-                                                         <i class="fas fa-eye"></i> Preview CV
-                                                     </button>
-                                                     <a id="cv-download" href="#" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2" onclick="downloadFile(this.getAttribute('data-file-path'))">
-                                                         <i class="fas fa-download"></i> Download CV
-                                                     </a>
-                                                 </div>
+                                                <div id="cv-actions" class="flex gap-3" style="display: none;">
+                                                    <button id="cv-preview" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2" onclick="previewCV(this.getAttribute('data-file-path'))">
+                                                        <i class="fas fa-eye"></i> عرض السيرة الذاتية
+                                                    </button>
+                                                    <a id="cv-download" href="#" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2" onclick="downloadFile(this.getAttribute('data-file-path'))">
+                                                        <i class="fas fa-download"></i> تحميل السيرة الذاتية
+                                                    </a>
+                                                </div>
                                                  <p id="no-cv" class="text-slate-500 text-center py-8">No CV uploaded</p>
                                              </div>
                                          </div>
@@ -1700,6 +1737,16 @@
                         <div class="client-welcome">
                             <h3 data-translate="forms.welcome">Welcome, <span id="client-name">Client</span>!</h3>
                             <p data-translate="forms.clientInfo">Manage your building projects and connect with qualified engineers</p>
+                            <div class="client-contact-info" style="margin-top: 10px; display: flex; gap: 20px; flex-wrap: wrap;">
+                                <span style="color: #666;">
+                                    <i class="fas fa-phone text-green-600"></i> 
+                                    <span id="client-phone" dir="ltr">+966 50 XXX XXXX</span>
+                                </span>
+                                <span style="color: #666;">
+                                    <i class="fas fa-envelope text-purple-600"></i> 
+                                    <span id="client-email">email@example.com</span>
+                                </span>
+                            </div>
                             
                             <!-- Admin Debug Buttons - Only visible for admin users -->
                             <div id="admin-debug-buttons" class="admin-debug-section" style="display: none;">
@@ -1823,7 +1870,12 @@
                         <div id="engineers-browser" class="client-section" style="display: none;">
                             <h4><i class="fas fa-users"></i> المهندسين المتاحين</h4>
                             <div class="search-controls">
-                                <input type="text" id="engineer-search" class="search-input" placeholder="ابحث عن المهندسين بالمهارات والخبرة...">
+                                <div class="search-input-wrapper" style="position: relative; flex: 1;">
+                                    <input type="text" id="engineer-search" class="search-input" placeholder="ابحث عن المهندسين بالمهارات والخبرة..." style="padding-right: 40px;">
+                                    <button id="clear-engineer-search" class="clear-search-btn" onclick="clearEngineerSearch()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; cursor: pointer; display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                                 <button class="btn btn-primary" onclick="searchEngineers()">
                                     <i class="fas fa-search"></i> بحث
                                 </button>
@@ -1831,6 +1883,7 @@
                                     <i class="fas fa-times"></i> إغلاق
                                 </button>
                             </div>
+                            <div id="search-results-count" class="text-sm text-muted" style="margin: 10px 0;"></div>
                             <div class="engineers-list" id="engineers-list">
                                 <p class="text-muted">لم يتم العثور على مهندسين</p>
                             </div>
@@ -1859,15 +1912,20 @@
                                      <input type="text" id="edit-username" name="username" required>
                                  </div>
                                  
-                                 <div class="form-group">
-                                     <label for="edit-email">البريد الإلكتروني</label>
-                                     <input type="email" id="edit-email" name="email" required>
-                                 </div>
-                                 
-                                 <div class="form-group">
-                                     <label for="edit-experience">سنوات الخبرة</label>
-                                     <input type="number" id="edit-experience" name="experience" min="0" max="50">
-                                 </div>
+                                <div class="form-group">
+                                    <label for="edit-email">البريد الإلكتروني</label>
+                                    <input type="email" id="edit-email" name="email" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="edit-phone">رقم الهاتف</label>
+                                    <input type="tel" id="edit-phone" name="phone" placeholder="+966 5X XXX XXXX" pattern="^\+?[0-9\s\-\(\)]+$" dir="ltr">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="edit-experience">سنوات الخبرة</label>
+                                    <input type="number" id="edit-experience" name="experience" min="0" max="50">
+                                </div>
                                  
                                  <div class="form-group">
                                      <label for="edit-photo">صورة الملف الشخصي</label>
@@ -2242,23 +2300,23 @@
     <div id="cv-preview-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-file-alt"></i> CV Preview</h3>
+                <h3><i class="fas fa-file-alt"></i> عرض السيرة الذاتية</h3>
                 <button class="modal-close" onclick="closeCVPreview()">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="cv-preview-content">
                     <div class="loading-spinner">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading CV...</p>
+                        <p>جاري تحميل السيرة الذاتية...</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeCVPreview()">
-                    <i class="fas fa-times"></i> Close
+                    <i class="fas fa-times"></i> إغلاق
                 </button>
                 <button id="cv-download-from-modal" class="btn btn-primary" onclick="downloadFile(this.getAttribute('data-file-path'))">
-                    <i class="fas fa-download"></i> Download
+                    <i class="fas fa-download"></i> تحميل
                 </button>
             </div>
         </div>

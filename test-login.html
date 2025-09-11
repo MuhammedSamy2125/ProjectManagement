@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login Redirect Debug Page</h1>
+    
+    <div class="section">
+        <h2>Test Controls</h2>
+        <button onclick="testLogin()">Test Admin Login</button>
+        <button onclick="testClientLogin()">Test Client Login</button>
+        <button onclick="manualRedirect()">Manual Dashboard Redirect</button>
+        <button onclick="checkStatus()">Check Current Status</button>
+        <button onclick="clearSession()">Clear Session</button>
+        <button onclick="goToMain()">Go to Main Site</button>
+    </div>
+    
+    <div class="section">
+        <h2>Status</h2>
+        <div id="status" class="status">Ready for testing...</div>
+    </div>
+    
+    <div class="section">
+        <h2>Console Output</h2>
+        <pre id="console-output"></pre>
+    </div>
+
+    <script src="starter.js"></script>
+    <script>
+        let consoleOutput = '';
+        
+        // Override console.log to capture output
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleOutput += args.join(' ') + '\n';
+            document.getElementById('console-output').textContent = consoleOutput;
+        };
+        
+        // Override console.error
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleOutput += '[ERROR] ' + args.join(' ') + '\n';
+            document.getElementById('console-output').textContent = consoleOutput;
+        };
+        
+        function updateStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + (isError ? 'error' : 'success');
+        }
+        
+        function testLogin() {
+            console.log('=== TESTING ADMIN LOGIN ===');
+            updateStatus('Testing admin login...');
+            
+            if (window.webApp) {
+                // Create admin user object
+                const adminUser = {
+                    id: 1,
+                    username: "admin",
+                    email: "admin@example.com",
+                    role: "admin"
+                };
+                
+                console.log('Calling loginUser with:', adminUser);
+                window.webApp.loginUser(adminUser);
+                
+                // Check if redirect happened
+                setTimeout(() => {
+                    const currentPage = window.webApp.currentPage;
+                    console.log('Current page after login:', currentPage);
+                    
+                    if (currentPage === 'dashboard') {
+                        updateStatus('Success! Redirected to dashboard');
+                        
+                        // Check which dashboard is visible
+                        const adminDash = document.getElementById('admin-dashboard');
+                        if (adminDash && adminDash.style.display !== 'none') {
+                            console.log('Admin dashboard is visible');
+                        } else {
+                            console.log('Admin dashboard is NOT visible');
+                        }
+                    } else {
+                        updateStatus('Failed to redirect. Current page: ' + currentPage, true);
+                    }
+                }, 500);
+            } else {
+                updateStatus('WebApp not initialized!', true);
+            }
+        }
+        
+        function testClientLogin() {
+            console.log('=== TESTING CLIENT LOGIN ===');
+            updateStatus('Testing client login...');
+            
+            if (window.webApp) {
+                // Create client user object
+                const clientUser = {
+                    id: 2,
+                    username: "client1",
+                    email: "client@example.com",
+                    role: "client"
+                };
+                
+                console.log('Calling loginUser with:', clientUser);
+                window.webApp.loginUser(clientUser);
+                
+                // Check if redirect happened
+                setTimeout(() => {
+                    const currentPage = window.webApp.currentPage;
+                    console.log('Current page after login:', currentPage);
+                    
+                    if (currentPage === 'dashboard') {
+                        updateStatus('Success! Redirected to dashboard');
+                        
+                        // Check which dashboard is visible
+                        const clientDash = document.getElementById('client-dashboard');
+                        if (clientDash && clientDash.style.display !== 'none') {
+                            console.log('Client dashboard is visible');
+                        } else {
+                            console.log('Client dashboard is NOT visible');
+                        }
+                    } else {
+                        updateStatus('Failed to redirect. Current page: ' + currentPage, true);
+                    }
+                }, 500);
+            } else {
+                updateStatus('WebApp not initialized!', true);
+            }
+        }
+        
+        function manualRedirect() {
+            console.log('=== MANUAL REDIRECT ===');
+            updateStatus('Attempting manual redirect...');
+            
+            if (window.webApp) {
+                if (window.webApp.currentUser) {
+                    console.log('Current user:', window.webApp.currentUser);
+                    window.webApp.showPage('dashboard');
+                    
+                    setTimeout(() => {
+                        const currentPage = window.webApp.currentPage;
+                        if (currentPage === 'dashboard') {
+                            updateStatus('Manual redirect successful!');
+                        } else {
+                            updateStatus('Manual redirect failed. Current page: ' + currentPage, true);
+                        }
+                    }, 100);
+                } else {
+                    updateStatus('No user logged in. Login first!', true);
+                }
+            } else {
+                updateStatus('WebApp not initialized!', true);
+            }
+        }
+        
+        function checkStatus() {
+            console.log('=== CHECKING STATUS ===');
+            
+            if (window.webApp) {
+                console.log('WebApp initialized: YES');
+                console.log('Current user:', window.webApp.currentUser);
+                console.log('Current page:', window.webApp.currentPage);
+                console.log('Is authenticated:', window.webApp.isAuthenticated());
+                
+                // Check page elements
+                const dashboardPage = document.getElementById('dashboard');
+                console.log('Dashboard page exists:', !!dashboardPage);
+                if (dashboardPage) {
+                    console.log('Dashboard classes:', dashboardPage.className);
+                    console.log('Dashboard display:', window.getComputedStyle(dashboardPage).display);
+                }
+                
+                // Check sub-dashboards
+                const adminDash = document.getElementById('admin-dashboard');
+                const clientDash = document.getElementById('client-dashboard');
+                const engineerDash = document.getElementById('engineer-dashboard');
+                
+                console.log('Admin dashboard exists:', !!adminDash);
+                console.log('Client dashboard exists:', !!clientDash);
+                console.log('Engineer dashboard exists:', !!engineerDash);
+                
+                updateStatus('Status check complete - see console output');
+            } else {
+                updateStatus('WebApp not initialized!', true);
+            }
+        }
+        
+        function clearSession() {
+            console.log('=== CLEARING SESSION ===');
+            localStorage.clear();
+            if (window.webApp) {
+                window.webApp.currentUser = null;
+            }
+            updateStatus('Session cleared');
+            consoleOutput = '';
+            document.getElementById('console-output').textContent = '';
+        }
+        
+        function goToMain() {
+            window.location.href = 'index.html';
+        }
+        
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Test page loaded');
+            console.log('WebApp available:', !!window.webApp);
+            
+            // Wait a bit for WebApp to initialize
+            setTimeout(() => {
+                checkStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
