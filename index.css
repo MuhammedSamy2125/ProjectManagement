@@ -3655,7 +3655,6 @@ body {
 #project-steps-modal .bg-white,
 #client-project-steps-modal .bg-white {
     animation: modalSlideIn 0.3s ease-out;
-    margin: auto;
 }
 
 @keyframes modalFadeIn {

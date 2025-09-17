@@ -1328,7 +1328,7 @@ class WebApp {
 
         if (this.currentUser) {
             // User is logged in
-            authLink.innerHTML = '<i class="fas fa-user"></i> Dashboard';
+            authLink.innerHTML = '<i class="fas fa-user"></i> لوحة التحكم';
             authLink.setAttribute('data-page', 'dashboard');
             authLink.href = '#dashboard';
             
@@ -1350,7 +1350,7 @@ class WebApp {
             }
         } else {
             // User is not logged in
-            authLink.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            authLink.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
             authLink.setAttribute('data-page', 'login');
             authLink.href = '#login';
             
@@ -1618,7 +1618,7 @@ class WebApp {
         if (!this.currentUser.projects || this.currentUser.projects.length === 0) {
             console.log('No projects found, showing default message');
             if (projectsList) {
-                projectsList.innerHTML = '<p class="text-muted">No projects created yet</p>';
+                projectsList.innerHTML = '<p class="text-muted">لا يوجد مشاريع</p>';
             }
             return;
         }
@@ -2189,12 +2189,8 @@ class WebApp {
             return;
         }
 
-        // Validate engineer selection
-        const selectedEngineerId = document.getElementById('selected-engineer-id');
-        if (!selectedEngineerId || !selectedEngineerId.value) {
-            this.showError('Please select an engineer for your project');
-            return;
-        }
+        // Engineer selection is now optional - projects can be created without an engineer
+        // Engineers will be selected later in a separate step
 
         // Handle checkbox arrays
         const exteriorMaterials = Array.from(form.querySelectorAll('input[name="exteriorMaterials"]:checked'))
@@ -2210,8 +2206,8 @@ class WebApp {
             ...projectData,
             clientId: this.currentUser.id,
             createdAt: new Date().toISOString(),
-            status: 'pending', // Changed to pending since engineer needs to accept
-            assignedEngineer: selectedEngineerId.value, // Set the selected engineer
+            status: 'draft', // Project starts as draft until engineer is selected
+            assignedEngineer: null, // No engineer assigned initially
             // Convert numeric fields
             buildingSize: parseInt(projectData.buildingSize) || 0,
             lotSize: parseInt(projectData.lotSize) || 0,
@@ -2232,8 +2228,8 @@ class WebApp {
         }
         this.currentUser.projects.push(project);
 
-        // Create project request for the selected engineer
-        this.createProjectRequest(project, selectedEngineerId.value);
+        // Project request will be created later when engineer is selected
+        // No immediate project request creation needed
 
         // Update user data in storage
         this.updateUserInStorage();
@@ -2242,10 +2238,14 @@ class WebApp {
         this.loadClientProjects();
         this.closeProjectForm();
         
-        // Update workflow step
-        this.updateWorkflowStep(4, 'completed');
+        // Update workflow step - project creation is now step 1
+        this.updateWorkflowStep(1, 'completed');
         
-        this.showSuccess('Building project created and request sent to engineer successfully!');
+        // Enable step 2 (Choose Engineer) after project creation
+        this.updateWorkflowStep(2, 'active');
+        this.enableEngineerSelection();
+        
+        this.showSuccess('Building project created successfully! You can now browse and select an engineer for your project.');
     }
 
     // Create project request for engineer
@@ -2411,6 +2411,46 @@ class WebApp {
             // Add new status class
             if (status) {
                 step.classList.add(status);
+            }
+        }
+    }
+
+    // Enable engineer selection step after project creation
+    enableEngineerSelection() {
+        const chooseEngineerCard = document.getElementById('choose-engineer-card');
+        const chooseEngineerBtn = chooseEngineerCard?.querySelector('button');
+        
+        if (chooseEngineerCard && chooseEngineerBtn) {
+            // Remove disabled state
+            chooseEngineerCard.classList.remove('disabled-action');
+            chooseEngineerBtn.disabled = false;
+            chooseEngineerBtn.classList.remove('btn-secondary');
+            chooseEngineerBtn.classList.add('btn-primary');
+            
+            // Remove the "complete step 1 first" note
+            const note = chooseEngineerCard.querySelector('.action-note');
+            if (note) {
+                note.remove();
+            }
+        }
+    }
+
+    // Enable send request step after engineer selection
+    enableSendRequest() {
+        const sendRequestCard = document.getElementById('send-request-card');
+        const sendRequestBtn = sendRequestCard?.querySelector('button');
+        
+        if (sendRequestCard && sendRequestBtn) {
+            // Remove disabled state
+            sendRequestCard.classList.remove('disabled-action');
+            sendRequestBtn.disabled = false;
+            sendRequestBtn.classList.remove('btn-secondary');
+            sendRequestBtn.classList.add('btn-primary');
+            
+            // Remove the "complete previous steps first" note
+            const note = sendRequestCard.querySelector('.action-note');
+            if (note) {
+                note.remove();
             }
         }
     }
@@ -2766,15 +2806,34 @@ class WebApp {
         console.log('=== SEND PROJECT REQUEST ===');
         console.log('Engineer ID:', engineerId);
 
-        // Store selected engineer for project creation
-        this.selectedEngineer = engineerId;
+        // Get the most recent project (should be the one just created)
+        const recentProject = this.currentUser.projects && this.currentUser.projects.length > 0 
+            ? this.currentUser.projects[this.currentUser.projects.length - 1] 
+            : null;
+
+        if (!recentProject) {
+            this.showError('Please create a project first before selecting an engineer');
+            return;
+        }
+
+        // Update the project with the selected engineer
+        recentProject.assignedEngineer = engineerId;
+        recentProject.status = 'pending';
+        
+        // Create project request for the selected engineer
+        this.createProjectRequest(recentProject, engineerId);
         
         // Update workflow step
         this.updateWorkflowStep(2, 'completed');
         this.updateWorkflowStep(3, 'active');
         
-        // Show project creation form with engineer pre-selected
-        this.openProjectFormWithEngineer(engineerId);
+        // Hide engineers browser
+        this.hideEngineersSection();
+        
+        // Enable step 3 (Send Request)
+        this.enableSendRequest();
+        
+        this.showSuccess('Project request sent to engineer successfully!');
     }
 
     // Open project form with pre-selected engineer
@@ -2983,7 +3042,7 @@ class WebApp {
         
         if (clientRequests.length === 0) {
             console.log('No client requests found, showing default message');
-            requestsList.innerHTML = '<p class="text-muted">No project requests found</p>';
+            requestsList.innerHTML = '<p class="text-muted">لا يوجد طلبات مشاريع</p>';
             return;
         }
 
@@ -3050,7 +3109,7 @@ class WebApp {
         console.log('Engineer requests:', engineerRequests);
         
         if (engineerRequests.length === 0) {
-            requestsList.innerHTML = '<p class="text-muted">No project requests received</p>';
+            requestsList.innerHTML = '<p class="text-muted">لا يوجد طلبات مشاريع</p>';
             return;
         }
 
@@ -3131,7 +3190,7 @@ class WebApp {
         console.log('Accepted requests:', acceptedRequests);
         
         if (acceptedRequests.length === 0) {
-            projectsList.innerHTML = '<p class="text-muted">No projects accepted yet</p>';
+            projectsList.innerHTML = '<p class="text-muted">لا يوجد مشاريع مقبولة</p>';
             return;
         }
 
@@ -3260,10 +3319,87 @@ class WebApp {
         // Store current project for steps management
         this.currentProjectRequest = request;
         
-        // Initialize project steps if not exists
-        if (!request.projectSteps) {
-            request.projectSteps = [];
+        // Initialize or update project phases with latest structure
+        if (!request.projectPhases || !request.projectPhases[2] || request.projectPhases[2].items.length !== 6 || !request.projectPhases[3] || request.projectPhases[3].items.length !== 7 || !request.projectPhases[4] || request.projectPhases[4].items.length !== 13 || !request.projectPhases[5] || request.projectPhases[5].items.length !== 6) {
+            request.projectPhases = {
+                1: { 
+                    title: 'المرحلة الأولى', 
+                    items: [
+                        { id: 'property_deed', label: 'صك الملكية', notes: '', file: null },
+                        { id: 'soil_report', label: 'تقرير التربة', notes: '', file: null },
+                        { id: 'building_permit', label: 'رخصة البناء', notes: '', file: null },
+                        { id: 'architectural_plans', label: 'المخططات المعمارية', notes: '', file: null },
+                        { id: 'structural_plans', label: 'المخططات الإنشائية', notes: '', file: null },
+                        { id: 'interior_design', label: 'التصميم الداخلي', notes: '', file: null },
+                        { id: 'timeline', label: 'الجدول الزمني', notes: '', file: null },
+                        { id: 'quantity_calculation', label: 'جدول حساب الكميات', notes: '', file: null },
+                        { id: 'cash_flows', label: 'التدفقات النقدية', notes: '', file: null },
+                        { id: 'insurance_document', label: 'وثيقة التأمين', notes: '', file: null },
+                        { id: 'contractor_contract', label: 'عقد المقاول', notes: '', file: null },
+                        { id: 'supervisor_contract', label: 'عقد المشرف الهندسي', notes: '', file: null },
+                        { id: 'plumbing_contract', label: 'عقد السباكة', notes: '', file: null },
+                        { id: 'electrical_contract', label: 'عقد الكهرباء', notes: '', file: null },
+                        { id: 'steel_invoice', label: 'فاتورة الحديد', notes: '', file: null },
+                        { id: 'concrete_invoice', label: 'فاتورة الخرسانة', notes: '', file: null }
+                    ]
+                },
+                2: { 
+                    title: 'المرحلة الثانية', 
+                    items: [
+                        { id: 'site_handover', label: 'استلام الموقع من المساح', notes: '', file: null },
+                        { id: 'excavation_level', label: 'تحديد منسوب الحفر', notes: '', file: null },
+                        { id: 'water_source', label: 'مصدر المياه', notes: '', file: null },
+                        { id: 'electricity_source', label: 'مصدر الكهرباء', notes: '', file: null },
+                        { id: 'camera_installation', label: 'تركيب الكاميرات', notes: '', file: null },
+                        { id: 'risk_assessment', label: 'حصر المخاطر', notes: '', file: null }
+                    ]
+                },
+                3: { 
+                    title: 'المرحلة الثالثة', 
+                    items: [
+                        { id: 'formwork_handover', label: 'استلام الخنزيرة', notes: '', file: null },
+                        { id: 'foundation_cleanup', label: 'صبة نظافة القواعد', notes: '', file: null },
+                        { id: 'foundation_steelwork', label: 'حدادة القواعد', notes: '', file: null },
+                        { id: 'foundation_carpentry', label: 'نجارة القواعد', notes: '', file: null },
+                        { id: 'foundation_pouring', label: 'صب القواعد', notes: '', file: null },
+                        { id: 'column_carpentry', label: 'نجارة الرقاب', notes: '', file: null },
+                        { id: 'foundation_insulation', label: 'عزل القواعد', notes: '', file: null }
+                    ]
+                },
+                4: { 
+                    title: 'المرحلة الرابعة', 
+                    items: [
+                        { id: 'finishing_work', label: 'التشطيبات', notes: '', file: null },
+                        { id: 'site_cleanup', label: 'نظافة الموقع', notes: '', file: null },
+                        { id: 'plumbing_foundation', label: 'تأسيس السباكة', notes: '', file: null },
+                        { id: 'electrical_foundation', label: 'تأسيس الكهرباء', notes: '', file: null },
+                        { id: 'pool_foundation', label: 'تأسيس المسبح', notes: '', file: null },
+                        { id: 'landscaping_foundation', label: 'تأسيس المزروعات', notes: '', file: null },
+                        { id: 'plastering', label: 'اللياسة', notes: '', file: null },
+                        { id: 'gypsum_work', label: 'الجبس', notes: '', file: null },
+                        { id: 'air_conditioning', label: 'التكييف', notes: '', file: null },
+                        { id: 'tiling', label: 'البلاط', notes: '', file: null },
+                        { id: 'windows', label: 'النوافذ', notes: '', file: null },
+                        { id: 'doors', label: 'الأبواب', notes: '', file: null },
+                        { id: 'painting', label: 'الدهانات', notes: '', file: null }
+                    ]
+                },
+                5: { 
+                    title: 'المرحلة الخامسة', 
+                    items: [
+                        { id: 'thermal_insulation', label: 'العزل الحراري', notes: '', file: null },
+                        { id: 'water_insulation', label: 'العزل المائي', notes: '', file: null },
+                        { id: 'electrical_activation', label: 'إطلاق التيار الكهربائي', notes: '', file: null },
+                        { id: 'work_document', label: 'وثيقة الاشغال', notes: '', file: null },
+                        { id: 'material_invoices', label: 'فواتير المواد', notes: '', file: null },
+                        { id: 'contractor_contracts', label: 'عقود المنفذين', notes: '', file: null }
+                    ]
+                }
+            };
         }
+        
+        // Initialize current phase
+        this.currentPhase = 1;
         
         // Show modal
         const modal = document.getElementById('project-steps-modal');
@@ -3271,30 +3407,182 @@ class WebApp {
             modal.style.display = 'flex';
             
             // Update project info
-            document.getElementById('project-steps-title').textContent = `Project: ${request.projectName}`;
-            document.getElementById('project-steps-client').textContent = `Client: ${request.clientName}`;
+            document.getElementById('project-steps-title').textContent = `المشروع: ${request.projectName}`;
+            document.getElementById('project-steps-client').textContent = `العميل: ${request.clientName}`;
             
-            // Load steps
-            this.loadProjectSteps();
+            // Initialize phase navigation
+            this.initializePhaseNavigation();
+            
+            // Load current phase items
+            this.loadPhaseItems();
         }
     }
     
-    loadProjectSteps() {
-        const stepsList = document.getElementById('project-steps-list');
-        if (!stepsList || !this.currentProjectRequest) return;
+    // Phase Navigation Functions
+    initializePhaseNavigation() {
+        // Update phase navigation buttons
+        const phaseButtons = document.querySelectorAll('.phase-nav-btn');
+        phaseButtons.forEach(btn => {
+            const phaseNum = parseInt(btn.dataset.phase);
+            if (phaseNum === this.currentPhase) {
+                btn.classList.remove('bg-opacity-20');
+                btn.classList.add('bg-opacity-30');
+            } else {
+                btn.classList.remove('bg-opacity-30');
+                btn.classList.add('bg-opacity-20');
+            }
+        });
         
-        const steps = this.currentProjectRequest.projectSteps || [];
+        // Update phase title
+        const phaseTitle = document.getElementById('current-phase-title');
+        if (phaseTitle && this.currentProjectRequest) {
+            const phaseData = this.currentProjectRequest.projectPhases[this.currentPhase];
+            phaseTitle.textContent = phaseData ? phaseData.title : `المرحلة ${this.currentPhase}`;
+        }
+    }
+    
+    switchToPhase(phaseNumber) {
+        if (phaseNumber < 1 || phaseNumber > 5) return;
         
-        if (steps.length === 0) {
-            stepsList.innerHTML = '<p class="text-muted text-center">No steps added yet. Click "Add Step" to get started.</p>';
+        this.currentPhase = phaseNumber;
+        this.initializePhaseNavigation();
+        this.loadPhaseItems();
+    }
+    
+    loadPhaseItems() {
+        const itemsList = document.getElementById('phase-items-list');
+        if (!itemsList || !this.currentProjectRequest) return;
+        
+        const phaseData = this.currentProjectRequest.projectPhases[this.currentPhase];
+        if (!phaseData || !phaseData.items || phaseData.items.length === 0) {
+            itemsList.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد عناصر في هذه المرحلة.</p>';
             return;
         }
         
-        const stepsHtml = steps.map((step, index) => {
-            return this.createStepHTML(step, index + 1);
+        const itemsHtml = phaseData.items.map((item, index) => {
+            return this.createPhaseItemHTML(item, index + 1);
         }).join('');
         
-        stepsList.innerHTML = stepsHtml;
+        // Add save button at the end of the phase
+        const saveButtonHtml = `
+            <div class="mt-6 pt-6 pb-6 border-t border-slate-200">
+                <div class="flex justify-center">
+                    <button onclick="saveCurrentPhase()" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition-colors duration-200 flex items-center gap-2 text-lg font-semibold">
+                        <i class="fas fa-save"></i> حفظ المرحلة
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        itemsList.innerHTML = itemsHtml + saveButtonHtml;
+    }
+    
+    createPhaseItemHTML(item, itemNumber) {
+        return `
+            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm" data-item-id="${item.id}">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-semibold text-sm">
+                            ${itemNumber}
+                        </div>
+                        <div>
+                            <h6 class="font-semibold text-slate-900">${this.escapeHtml(item.label)}</h6>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <!-- Notes Field -->
+                    <div>
+                        <label for="notes-${item.id}" class="block text-sm font-semibold text-slate-700 mb-2">
+                            ملاحظات
+                        </label>
+                        <textarea id="notes-${item.id}" 
+                                  placeholder="أدخل ملاحظاتك هنا..."
+                                  rows="3"
+                                  class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none">${this.escapeHtml(item.notes || '')}</textarea>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            رفع ملف
+                        </label>
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 cursor-pointer"
+                             onclick="document.getElementById('file-${item.id}').click()">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-cloud-upload-alt text-blue-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-slate-600 font-medium">انقر لرفع ملف</p>
+                                    <p class="text-slate-500 text-sm">أو اسحب الملف هنا</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="file" 
+                               id="file-${item.id}" 
+                               accept="*/*" 
+                               style="display: none;" 
+                               onchange="handlePhaseItemFileUpload('${item.id}', this)">
+                        
+                        <!-- File Display -->
+                        <div class="mt-3" id="file-display-${item.id}">
+                            ${item.file ? this.createFileDisplayHTML(item.file, item.id) : ''}
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        `;
+    }
+    
+    createFileDisplayHTML(file, itemId) {
+        if (typeof file === 'string') {
+            // File URL
+            return `
+                <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-green-800">تم رفع الملف بنجاح</p>
+                        <p class="text-xs text-green-600">${file}</p>
+                    </div>
+                    <button onclick="removePhaseItemFile('${itemId}')" 
+                            class="w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full flex items-center justify-center transition-colors duration-200">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            `;
+        } else if (file && file.name) {
+            // File object
+            return `
+                <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-green-800">${this.escapeHtml(file.name)}</p>
+                        <p class="text-xs text-green-600">${this.formatFileSize(file.size)}</p>
+                    </div>
+                    <button onclick="removePhaseItemFile('${itemId}')" 
+                            class="w-6 h-6 bg-red-100 hover:bg-red-200 text-red-600 rounded-full flex items-center justify-center transition-colors duration-200">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
+        return '';
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
     createStepHTML(step, stepNumber) {
@@ -3638,21 +3926,138 @@ class WebApp {
             modal.style.display = 'none';
         }
         this.currentProjectRequest = null;
+        this.currentPhase = null;
+    }
+    
+    // Phase Item Management Functions
+    saveCurrentPhase() {
+        if (!this.currentProjectRequest || !this.currentPhase) return;
+        
+        const phaseData = this.currentProjectRequest.projectPhases[this.currentPhase];
+        if (phaseData && phaseData.items) {
+            phaseData.items.forEach(item => {
+                // Get current form values for each item
+                const notesElement = document.getElementById(`notes-${item.id}`);
+                if (notesElement) {
+                    item.notes = notesElement.value?.trim() || '';
+                }
+                item.updatedAt = new Date().toISOString();
+            });
+        }
+        
+        // Save to storage
+        this.saveDataToJSON();
+        this.showSuccess(`تم حفظ ${phaseData.title} بنجاح!`);
+    }
+    
+    handlePhaseItemFileUpload(itemId, input) {
+        if (!this.currentProjectRequest || !this.currentPhase) return;
+        
+        const file = input.files[0];
+        if (!file) return;
+        
+        const phaseData = this.currentProjectRequest.projectPhases[this.currentPhase];
+        const item = phaseData.items.find(i => i.id === itemId);
+        if (!item) return;
+        
+        // Create blob URL for the file
+        const blobUrl = URL.createObjectURL(file);
+        console.log('Created blob URL:', blobUrl);
+        
+        // Also create base64 data as fallback
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Data = e.target.result;
+            console.log('Created base64 data:', base64Data.substring(0, 50) + '...');
+            
+            // Update file info with base64 data
+        item.file = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+                lastModified: file.lastModified,
+                url: blobUrl,
+                data: base64Data, // Use base64 data instead of blob URL
+                blobUrl: blobUrl // Keep blob URL as backup
+            };
+            
+            console.log('Updated file info with base64:', item.file);
+            
+            // Update file display
+            const fileDisplay = document.getElementById(`file-display-${itemId}`);
+            if (fileDisplay) {
+                fileDisplay.innerHTML = window.webApp.createFileDisplayHTML(item.file, itemId);
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        // Store initial file info with blob URL
+        item.file = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            url: blobUrl,
+            data: blobUrl // Will be updated with base64 data
+        };
+        
+        console.log('Stored initial file info:', item.file);
+        
+        // Update file display
+        const fileDisplay = document.getElementById(`file-display-${itemId}`);
+        if (fileDisplay) {
+            fileDisplay.innerHTML = this.createFileDisplayHTML(item.file, itemId);
+        }
+        
+        this.showSuccess('تم رفع الملف بنجاح!');
+    }
+    
+    removePhaseItemFile(itemId) {
+        if (!this.currentProjectRequest || !this.currentPhase) return;
+        
+        const phaseData = this.currentProjectRequest.projectPhases[this.currentPhase];
+        const item = phaseData.items.find(i => i.id === itemId);
+        if (!item) return;
+        
+        // Remove file
+        item.file = null;
+        
+        // Clear file input
+        const fileInput = document.getElementById(`file-${itemId}`);
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // Update file display
+        const fileDisplay = document.getElementById(`file-display-${itemId}`);
+        if (fileDisplay) {
+            fileDisplay.innerHTML = '';
+        }
+        
+        this.showSuccess('تم حذف الملف بنجاح!');
     }
     
     saveProjectSteps() {
         if (!this.currentProjectRequest) return;
         
-        // Save any pending edits
-        const editingSteps = this.currentProjectRequest.projectSteps.filter(s => s.isEditing);
-        if (editingSteps.length > 0) {
-            this.showError('Please save or cancel all editing steps before saving the project');
-            return;
+        // Save all phase data
+        for (let phase = 1; phase <= 5; phase++) {
+            const phaseData = this.currentProjectRequest.projectPhases[phase];
+            if (phaseData && phaseData.items) {
+                phaseData.items.forEach(item => {
+                    // Get current form values for each item
+                    const notesElement = document.getElementById(`notes-${item.id}`);
+                    if (notesElement) {
+                        item.notes = notesElement.value?.trim() || '';
+                    }
+                    item.updatedAt = new Date().toISOString();
+                });
+            }
         }
         
         // Save to storage
         this.saveDataToJSON();
-        this.showSuccess('Project steps saved successfully!');
+        this.showSuccess('تم حفظ جميع مراحل المشروع بنجاح!');
     }
     
     handleStepImageUpload(stepId, input) {
@@ -3711,32 +4116,8 @@ class WebApp {
 
     // Client Project Steps View
     viewProjectStepsAsClient(requestId) {
-        console.log('=== VIEW PROJECT STEPS AS CLIENT ===');
-        console.log('Request ID:', requestId);
-        
-        const request = this.data.projectRequests.find(r => r.id == requestId);
-        if (!request) {
-            this.showError('Project request not found');
-            return;
-        }
-        
-        console.log('Found request:', request);
-        
-        // Store current project for viewing
-        this.currentClientProjectRequest = request;
-        
-        // Show modal
-        const modal = document.getElementById('client-project-steps-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            
-            // Update project info
-            document.getElementById('client-project-steps-title').textContent = `Project: ${request.projectName}`;
-            document.getElementById('client-project-steps-engineer').textContent = `Engineer: ${request.engineerName}`;
-            
-            // Load steps
-            this.loadClientProjectSteps();
-        }
+        // Use the new client view function
+        this.viewClientProjectSteps(requestId);
     }
     
     loadClientProjectSteps() {
@@ -3814,6 +4195,610 @@ class WebApp {
             modal.style.display = 'none';
         }
         this.currentClientProjectRequest = null;
+        this.currentClientPhase = null;
+    }
+    
+    // Client View Functions
+    viewClientProjectSteps(requestId) {
+        console.log('=== VIEW CLIENT PROJECT STEPS ===');
+        console.log('Request ID:', requestId);
+        
+        const request = this.data.projectRequests.find(r => r.id == requestId);
+        if (!request) {
+            this.showError('Project request not found');
+            return;
+        }
+        
+        console.log('Found request:', request);
+        
+        // Store current project for client viewing
+        this.currentClientProjectRequest = request;
+        
+        // Initialize current phase
+        this.currentClientPhase = 1;
+        
+        // Show modal
+        const modal = document.getElementById('client-project-steps-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            
+            // Update project info
+            document.getElementById('client-project-steps-title').textContent = `المشروع: ${request.projectName}`;
+            document.getElementById('client-project-steps-engineer').textContent = `المهندس: ${request.engineerName}`;
+            
+            // Initialize phase navigation
+            this.initializeClientPhaseNavigation();
+            
+            // Load current phase items
+            this.loadClientPhaseItems();
+        }
+    }
+    
+    initializeClientPhaseNavigation() {
+        // Update phase navigation buttons
+        const phaseButtons = document.querySelectorAll('.client-phase-nav-btn');
+        phaseButtons.forEach(btn => {
+            const phaseNum = parseInt(btn.dataset.phase);
+            if (phaseNum === this.currentClientPhase) {
+                btn.classList.remove('bg-opacity-20');
+                btn.classList.add('bg-opacity-30');
+            } else {
+                btn.classList.remove('bg-opacity-30');
+                btn.classList.add('bg-opacity-20');
+            }
+        });
+        
+        // Update phase title
+        const phaseTitle = document.getElementById('client-current-phase-title');
+        if (phaseTitle && this.currentClientProjectRequest) {
+            const phaseData = this.currentClientProjectRequest.projectPhases[this.currentClientPhase];
+            phaseTitle.textContent = phaseData ? phaseData.title : `المرحلة ${this.currentClientPhase}`;
+        }
+    }
+    
+    switchToClientPhase(phaseNumber) {
+        if (phaseNumber < 1 || phaseNumber > 5) return;
+        
+        this.currentClientPhase = phaseNumber;
+        this.initializeClientPhaseNavigation();
+        this.loadClientPhaseItems();
+    }
+    
+    loadClientPhaseItems() {
+        const itemsList = document.getElementById('client-phase-items-list');
+        if (!itemsList || !this.currentClientProjectRequest) return;
+        
+        const phaseData = this.currentClientProjectRequest.projectPhases[this.currentClientPhase];
+        if (!phaseData || !phaseData.items || phaseData.items.length === 0) {
+            itemsList.innerHTML = '<p class="text-slate-500 text-center py-8">لا توجد عناصر في هذه المرحلة.</p>';
+            return;
+        }
+        
+        const itemsHtml = phaseData.items.map((item, index) => {
+            return this.createClientPhaseItemHTML(item, index + 1);
+        }).join('');
+        
+        itemsList.innerHTML = itemsHtml;
+    }
+    
+    createClientPhaseItemHTML(item, itemNumber) {
+        return `
+            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm" data-item-id="${item.id}">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center font-semibold text-sm">
+                            ${itemNumber}
+                        </div>
+                        <div>
+                            <h6 class="font-semibold text-slate-900">${this.escapeHtml(item.label)}</h6>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <!-- Notes Field (Read-Only) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            ملاحظات
+                        </label>
+                        <div class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 min-h-[80px]">
+                            ${item.notes ? this.escapeHtml(item.notes) : '<span class="text-slate-400 italic">لا توجد ملاحظات</span>'}
+                        </div>
+                    </div>
+                    
+                    <!-- File Display (Read-Only) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            الملفات المرفوعة
+                        </label>
+                        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                            ${item.file ? this.createClientFileDisplayHTML(item.file) : '<span class="text-slate-400 italic">لا توجد ملفات مرفوعة</span>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    createClientFileDisplayHTML(file) {
+        if (typeof file === 'string') {
+            // File URL - try to determine type from extension
+            const fileExtension = file.split('.').pop().toLowerCase();
+            let fileType = 'unknown';
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                fileType = 'image/' + (fileExtension === 'jpg' ? 'jpeg' : fileExtension);
+            } else if (fileExtension === 'pdf') {
+                fileType = 'application/pdf';
+            } else if (['txt', 'md'].includes(fileExtension)) {
+                fileType = 'text/plain';
+            } else if (['doc', 'docx'].includes(fileExtension)) {
+                fileType = 'application/msword';
+            }
+            
+            return `
+                <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-green-800">تم رفع الملف بنجاح</p>
+                        <p class="text-xs text-green-600">${file}</p>
+                    </div>
+                    <button onclick="previewFile(this.getAttribute('data-file-path'))" 
+                            data-file-path="${file}"
+                            class="px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 flex items-center gap-1">
+                        <i class="fas fa-eye"></i> معاينة
+                    </button>
+                </div>
+            `;
+        } else if (file && file.name) {
+            // File object
+            return `
+                <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-green-800">${this.escapeHtml(file.name)}</p>
+                        <p class="text-xs text-green-600">${this.formatFileSize(file.size)}</p>
+                    </div>
+                    <button onclick="previewFile(this.getAttribute('data-file-path'))" 
+                            data-file-path="${file.url || file.data || file.name}"
+                            class="px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 flex items-center gap-1">
+                        <i class="fas fa-eye"></i> معاينة
+                    </button>
+                </div>
+            `;
+        }
+        return '<span class="text-slate-400 italic">لا توجد ملفات مرفوعة</span>';
+    }
+    
+    // File Preview Function - Using the exact same logic as CV preview
+    previewFile(filePath) {
+        console.log('=== FILE PREVIEW DEBUG ===');
+        console.log('Previewing file path:', filePath);
+        
+        const modal = document.getElementById('file-preview-modal');
+        const content = document.getElementById('preview-content');
+        const downloadBtn = document.getElementById('preview-download-btn');
+        
+        if (!modal) {
+            console.error('File preview modal not found');
+            return;
+        }
+
+        // Show modal using the same modal system as CV preview
+        showModal('file-preview-modal');
+        
+        // Set download button path (same as CV preview)
+        if (downloadBtn) {
+            downloadBtn.setAttribute('data-file-path', filePath);
+        }
+        
+        // Show loading spinner first (same as CV preview)
+        content.innerHTML = `
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>جاري تحميل المعاينة...</p>
+                    </div>
+                `;
+        
+        // Get file info from persistent storage first (same as CV preview)
+        const fileName = filePath.split('/').pop();
+        const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
+        let fileInfo = persistentFiles.find(file => file.fileName === fileName);
+        
+        if (fileInfo) {
+            // Convert persistent file format to display format (same as CV preview)
+            fileInfo = {
+                ...fileInfo,
+                downloadUrl: fileInfo.data, // base64 data
+                originalName: fileInfo.originalName,
+                name: fileInfo.fileName,
+                type: fileInfo.type,
+                size: fileInfo.size
+            };
+        } else {
+            // Fallback to savedFiles (for recent uploads)
+            const savedFiles = JSON.parse(localStorage.getItem('savedFiles') || '[]');
+            fileInfo = savedFiles.find(file => file.path === filePath);
+        }
+        
+        // If still not found, check current project files (this is the key difference!)
+        if (!fileInfo && this.currentProjectRequest && this.currentProjectRequest.projectPhases) {
+            console.log('File not found in localStorage, checking current project files...');
+            for (const phase of Object.values(this.currentProjectRequest.projectPhases)) {
+                if (phase.items) {
+                    for (const item of phase.items) {
+                        if (item.file && (item.file.url === filePath || item.file.data === filePath || item.file.name === fileName)) {
+                            console.log('Found in current project files:', item.file);
+                            fileInfo = {
+                                name: item.file.name,
+                                originalName: item.file.name,
+                                type: item.file.type,
+                                size: item.file.size,
+                                downloadUrl: item.file.url || item.file.data,
+                                data: item.file.url || item.file.data
+                            };
+                            break;
+                        }
+                    }
+                }
+                if (fileInfo) break;
+            }
+        }
+        
+        // Store current file for download
+        this.currentPreviewFile = fileInfo;
+        downloadBtn.style.display = 'flex';
+        
+        if (fileInfo && fileInfo.downloadUrl) {
+            setTimeout(() => {
+                this.displayFilePreview(fileInfo, content);
+            }, 500);
+        } else {
+            content.innerHTML = `
+                <div class="cv-preview-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>الملف غير موجود</h4>
+                    <p>لا يمكن العثور على ملف المعاينة أو أنه لم يعد متاحًا.</p>
+                    <p>يرجى محاولة رفع الملف مرة أخرى.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Display file preview based on file type - using same logic as CV preview
+    displayFilePreview(fileInfo, container) {
+        console.log('=== DISPLAY FILE PREVIEW ===');
+        console.log('File info:', fileInfo);
+        console.log('Container:', container);
+        
+        const fileType = fileInfo.type.toLowerCase();
+        const fileName = fileInfo.originalName || fileInfo.name;
+        
+        console.log('File type:', fileType);
+        console.log('File name:', fileName);
+        console.log('Download URL:', fileInfo.downloadUrl);
+        
+        if (fileType.includes('pdf')) {
+            console.log('Displaying PDF preview with URL:', fileInfo.downloadUrl);
+            
+            // Create iframe with proper error handling
+            const iframe = document.createElement('iframe');
+            iframe.src = fileInfo.downloadUrl;
+            iframe.className = 'cv-preview-iframe';
+            iframe.title = 'File Preview';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            
+            // Add error handling
+            iframe.onerror = function() {
+                console.log('Iframe failed to load, showing fallback');
+                container.innerHTML = `
+                    <div class="cv-preview-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>خطأ في تحميل الملف</h4>
+                        <p>لا يمكن عرض الملف: ${fileName}</p>
+                        <p>الرابط: ${fileInfo.downloadUrl}</p>
+                        <button onclick="window.open('${fileInfo.downloadUrl}', '_blank')" class="btn btn-primary mt-3">
+                            <i class="fas fa-external-link-alt"></i> فتح في نافذة جديدة
+                        </button>
+                    </div>
+                `;
+            };
+            
+            // Add load event
+            iframe.onload = function() {
+                console.log('Iframe loaded successfully');
+            };
+            
+            // Add timeout to show error if iframe doesn't load
+            setTimeout(() => {
+                if (container.querySelector('iframe') && !container.querySelector('iframe').contentDocument) {
+                    console.log('Iframe timeout - showing error');
+                    container.innerHTML = `
+                        <div class="cv-preview-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>انتهت مهلة التحميل</h4>
+                            <p>لم يتم تحميل الملف في الوقت المحدد: ${fileName}</p>
+                            <p>الرابط: ${fileInfo.downloadUrl}</p>
+                            <button onclick="window.open('${fileInfo.downloadUrl}', '_blank')" class="btn btn-primary mt-3">
+                                <i class="fas fa-external-link-alt"></i> فتح في نافذة جديدة
+                            </button>
+                        </div>
+                    `;
+                }
+            }, 5000);
+            
+            // Clear container and append iframe
+            container.innerHTML = '';
+            container.appendChild(iframe);
+        } else if (fileType.includes('image')) {
+            // Image Preview - same as CV preview
+            container.innerHTML = `
+                <div style="text-align: center; flex: 1; display: flex; align-items: center; justify-content: center;">
+                    <img src="${fileInfo.downloadUrl}" alt="File Preview" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-md);">
+                </div>
+            `;
+        } else if (fileType.includes('text') || fileType.includes('document')) {
+            // Text/Document files
+            container.innerHTML = `
+                <div class="cv-preview-error">
+                    <i class="fas fa-file-alt"></i>
+                    <h4>المعاينة غير متاحة</h4>
+                    <p>المعاينة غير متاحة لـ ${fileName}.</p>
+                    <p>نوع الملف: ${fileInfo.type}</p>
+                    <p>يرجى تحميل الملف لعرض محتوياته.</p>
+                    </div>
+                `;
+            } else {
+            // Generic file preview
+            container.innerHTML = `
+                <div class="cv-preview-error">
+                    <i class="fas fa-file"></i>
+                    <h4>المعاينة غير متاحة</h4>
+                    <p>المعاينة غير متاحة لـ ${fileName}.</p>
+                    <p>نوع الملف: ${fileInfo.type}</p>
+                    <p>يرجى تحميل الملف لعرض محتوياته.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Find file by name in localStorage
+    findFileByName(fileName) {
+        console.log('=== FINDING FILE BY NAME ===');
+        console.log('Looking for file:', fileName);
+        
+        // First try savedFiles
+        const savedFiles = JSON.parse(localStorage.getItem('savedFiles') || '[]');
+        console.log('Saved files:', savedFiles);
+        
+        let fileInfo = savedFiles.find(file => 
+            file.originalName === fileName || file.name === fileName
+        );
+        
+        if (fileInfo) {
+            console.log('Found in savedFiles:', fileInfo);
+            return fileInfo;
+        }
+
+        // Try persistentFiles
+        const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
+        console.log('Persistent files:', persistentFiles);
+        
+        fileInfo = persistentFiles.find(file => 
+            file.originalName === fileName || file.fileName === fileName
+        );
+        
+        if (fileInfo) {
+            console.log('Found in persistentFiles:', fileInfo);
+            // Convert persistent file format to display format
+            return {
+                ...fileInfo,
+                downloadUrl: fileInfo.data, // base64 data
+                originalName: fileInfo.originalName,
+                name: fileInfo.fileName,
+                type: fileInfo.type,
+                size: fileInfo.size
+            };
+        }
+
+        // Try to find in current project files
+        if (this.currentProjectRequest && this.currentProjectRequest.projectPhases) {
+            console.log('Checking current project files...');
+            console.log('Project phases:', this.currentProjectRequest.projectPhases);
+            
+            for (const phase of Object.values(this.currentProjectRequest.projectPhases)) {
+                if (phase.items) {
+                    console.log('Phase items:', phase.items);
+                    for (const item of phase.items) {
+                        console.log('Checking item:', item);
+                        console.log('Item file:', item.file);
+                        console.log('Comparing:', item.file?.name, 'with', fileName);
+                        console.log('Or comparing:', item.file, 'with', fileName);
+                        
+                        if (item.file) {
+                            console.log('Checking item file:', item.file);
+                            console.log('File name match:', item.file.name === fileName);
+                            console.log('File string match:', item.file === fileName);
+                            console.log('File originalName match:', item.file.originalName === fileName);
+                            
+                            if (item.file.name === fileName || item.file === fileName || item.file.originalName === fileName) {
+                                console.log('Found in project files:', item.file);
+                                // Convert project file to preview format
+                                const fileInfo = {
+                                    name: item.file.name || fileName,
+                                    originalName: item.file.originalName || item.file.name || fileName,
+                                    type: item.file.type || 'application/pdf',
+                                    size: item.file.size || 0,
+                                    downloadUrl: item.file.data || item.file.url || item.file.blobUrl || null,
+                                    data: item.file.data || item.file.url || item.file.blobUrl || null
+                                };
+                                console.log('Converted file info:', fileInfo);
+                                return fileInfo;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log('File not found in any storage');
+        return null;
+    }
+
+    // Show image preview
+    showImagePreview(fileInfo, container) {
+        const imageUrl = fileInfo.downloadUrl || fileInfo.data;
+        
+        container.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center">
+                <div class="relative max-w-full max-h-full group">
+                    <img src="${imageUrl}" 
+                         alt="${fileInfo.originalName || fileInfo.name}" 
+                         class="max-w-full max-h-full object-contain rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+                         style="max-height: 60vh;"
+                         onclick="this.requestFullscreen()"
+                         onerror="this.parentElement.innerHTML='<div class=\\'text-center\\'><i class=\\'fas fa-exclamation-triangle text-6xl text-red-500 mb-4\\'></i><p class=\\'text-slate-600\\'>خطأ في تحميل الصورة</p></div>'">
+                    <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        ${this.formatFileSize(fileInfo.size)}
+                    </div>
+                    <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <i class="fas fa-expand"></i> انقر للتكبير
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Show PDF preview
+    showPDFPreview(fileInfo, container) {
+        const pdfUrl = fileInfo.downloadUrl || fileInfo.data;
+        
+        container.innerHTML = `
+            <div class="w-full h-full">
+                <iframe src="${pdfUrl}" 
+                        class="w-full h-full border-0 rounded-lg"
+                        style="min-height: 60vh;"
+                        title="PDF Preview">
+                    <div class="text-center p-8">
+                        <i class="fas fa-file-pdf text-6xl text-red-500 mb-4"></i>
+                        <p class="text-slate-600 mb-4">المتصفح لا يدعم معاينة PDF</p>
+                        <a href="${pdfUrl}" 
+                           download="${fileInfo.originalName || fileInfo.name}"
+                           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-download"></i> تحميل PDF
+                        </a>
+                    </div>
+                </iframe>
+            </div>
+        `;
+    }
+
+    // Show text file preview
+    showTextPreview(fileInfo, container) {
+        const textUrl = fileInfo.downloadUrl || fileInfo.data;
+        
+        container.innerHTML = `
+            <div class="w-full h-full">
+                <div class="bg-slate-50 rounded-lg p-4 h-full overflow-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-slate-800">محتوى الملف</h4>
+                        <a href="${textUrl}" 
+                           download="${fileInfo.originalName || fileInfo.name}"
+                           class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors duration-200">
+                            <i class="fas fa-download"></i> تحميل
+                        </a>
+                    </div>
+                    <iframe src="${textUrl}" 
+                            class="w-full h-full border-0 rounded"
+                            style="min-height: 50vh;"
+                            title="Text Preview">
+                        <div class="text-center p-8">
+                            <i class="fas fa-file-alt text-6xl text-blue-500 mb-4"></i>
+                            <p class="text-slate-600">لا يمكن عرض محتوى الملف</p>
+                        </div>
+                    </iframe>
+                </div>
+            </div>
+        `;
+    }
+
+    // Show generic file preview
+    showGenericFilePreview(fileInfo, container, fileType) {
+        const fileUrl = fileInfo.downloadUrl || fileInfo.data;
+        const fileIcon = this.getFileIcon(fileType);
+        const fileColor = this.getFileColor(fileType);
+        
+        container.innerHTML = `
+                    <div class="text-center">
+                <i class="${fileIcon} text-6xl ${fileColor} mb-4"></i>
+                <h3 class="text-xl font-semibold text-slate-800 mb-2">${fileInfo.originalName || fileInfo.name}</h3>
+                <p class="text-slate-600 mb-4">نوع الملف: ${fileType || 'غير محدد'}</p>
+                <p class="text-slate-500 mb-6">الحجم: ${this.formatFileSize(fileInfo.size)}</p>
+                <div class="flex gap-3 justify-center">
+                    <a href="${fileUrl}" 
+                       download="${fileInfo.originalName || fileInfo.name}"
+                       class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                        <i class="fas fa-download"></i> تحميل الملف
+                    </a>
+                    <button onclick="window.open('${fileUrl}', '_blank')" 
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                        <i class="fas fa-external-link-alt"></i> فتح في تبويب جديد
+                    </button>
+                </div>
+                    </div>
+                `;
+            }
+            
+    // Get file icon based on type
+    getFileIcon(fileType) {
+        if (!fileType) return 'fas fa-file text-slate-500';
+        
+        if (fileType.startsWith('image/')) return 'fas fa-image text-blue-500';
+        if (fileType.includes('pdf')) return 'fas fa-file-pdf text-red-500';
+        if (fileType.includes('word') || fileType.includes('document')) return 'fas fa-file-word text-blue-600';
+        if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'fas fa-file-excel text-green-600';
+        if (fileType.includes('powerpoint') || fileType.includes('presentation')) return 'fas fa-file-powerpoint text-orange-500';
+        if (fileType.includes('text')) return 'fas fa-file-alt text-slate-600';
+        if (fileType.includes('video')) return 'fas fa-file-video text-purple-500';
+        if (fileType.includes('audio')) return 'fas fa-file-audio text-pink-500';
+        if (fileType.includes('zip') || fileType.includes('archive')) return 'fas fa-file-archive text-yellow-600';
+        
+        return 'fas fa-file text-slate-500';
+    }
+
+    // Get file color based on type
+    getFileColor(fileType) {
+        if (!fileType) return 'text-slate-500';
+        
+        if (fileType.startsWith('image/')) return 'text-blue-500';
+        if (fileType.includes('pdf')) return 'text-red-500';
+        if (fileType.includes('word') || fileType.includes('document')) return 'text-blue-600';
+        if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'text-green-600';
+        if (fileType.includes('powerpoint') || fileType.includes('presentation')) return 'text-orange-500';
+        if (fileType.includes('text')) return 'text-slate-600';
+        if (fileType.includes('video')) return 'text-purple-500';
+        if (fileType.includes('audio')) return 'text-pink-500';
+        if (fileType.includes('zip') || fileType.includes('archive')) return 'text-yellow-600';
+        
+        return 'text-slate-500';
+    }
+
+    // Create mock file info for debugging
+    createMockFileInfo(fileName, fileType) {
+        return {
+            name: fileName,
+            originalName: fileName,
+            type: fileType || 'unknown',
+            size: 0,
+            downloadUrl: null,
+            data: null
+        };
     }
 
     // Admin Dashboard
@@ -4556,7 +5541,7 @@ class WebApp {
         const editBtn = document.getElementById('edit-profile-btn');
         if (editBtn) {
             editBtn.style.display = 'inline-flex';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Profile';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل الملف الشخصي';
         }
 
         // Ensure the profile view is visible and edit form is hidden
@@ -7121,6 +8106,32 @@ window.saveProjectSteps = function() {
     }
 };
 
+// Phase Navigation Functions
+window.switchToPhase = function(phaseNumber) {
+    if (window.webApp) {
+        window.webApp.switchToPhase(phaseNumber);
+    }
+};
+
+// Phase Item Management Functions
+window.saveCurrentPhase = function() {
+    if (window.webApp) {
+        window.webApp.saveCurrentPhase();
+    }
+};
+
+window.handlePhaseItemFileUpload = function(itemId, input) {
+    if (window.webApp) {
+        window.webApp.handlePhaseItemFileUpload(itemId, input);
+    }
+};
+
+window.removePhaseItemFile = function(itemId) {
+    if (window.webApp) {
+        window.webApp.removePhaseItemFile(itemId);
+    }
+};
+
 window.handleStepImageUpload = function(stepId, input) {
     if (window.webApp) {
         window.webApp.handleStepImageUpload(stepId, input);
@@ -7143,6 +8154,52 @@ window.viewProjectStepsAsClient = function(requestId) {
 window.closeClientProjectStepsModal = function() {
     if (window.webApp) {
         window.webApp.closeClientProjectStepsModal();
+    }
+};
+
+// Client View Functions
+window.viewClientProjectSteps = function(requestId) {
+    if (window.webApp) {
+        window.webApp.viewClientProjectSteps(requestId);
+    }
+};
+
+window.switchToClientPhase = function(phaseNumber) {
+    if (window.webApp) {
+        window.webApp.switchToClientPhase(phaseNumber);
+    }
+};
+
+// File Preview Functions
+window.previewFile = function(filePath) {
+    if (window.webApp) {
+        window.webApp.previewFile(filePath);
+    }
+};
+
+window.closeFilePreviewModal = function() {
+    closeModal('file-preview-modal');
+};
+
+window.downloadPreviewFile = function() {
+    const downloadBtn = document.getElementById('preview-download-btn');
+    if (downloadBtn && downloadBtn.getAttribute('data-file-path')) {
+        const filePath = downloadBtn.getAttribute('data-file-path');
+        window.webApp.downloadFile(filePath);
+    } else if (window.webApp && window.webApp.currentPreviewFile) {
+        const fileInfo = window.webApp.currentPreviewFile;
+        const fileUrl = fileInfo.downloadUrl || fileInfo.data;
+        const fileName = fileInfo.originalName || fileInfo.name;
+        
+        const downloadLink = document.createElement('a');
+        downloadLink.href = fileUrl;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        window.webApp.showSuccess(`تم تحميل الملف: ${fileName}`);
     }
 };
 
