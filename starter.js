@@ -1667,12 +1667,12 @@ class WebApp {
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     <div class="text-sm">
                         <span class="text-gray-600 font-medium">مساحة المبنى:</span>
-                        <p class="text-gray-800">${project.buildingSize.toLocaleString()} قدم²</p>
+                        <p class="text-gray-800">${project.buildingSize.toLocaleString()} متر²</p>
                     </div>
                     ${project.lotSize ? `
                         <div class="text-sm">
                             <span class="text-gray-600 font-medium">مساحة الأرض:</span>
-                            <p class="text-gray-800">${project.lotSize.toLocaleString()} قدم²</p>
+                            <p class="text-gray-800">${project.lotSize.toLocaleString()} متر²</p>
                         </div>
                     ` : ''}
                     <div class="text-sm">
@@ -1681,7 +1681,7 @@ class WebApp {
                     </div>
                     <div class="text-sm">
                         <span class="text-gray-600 font-medium">الميزانية:</span>
-                        <p class="text-gray-800">$${project.budget.toLocaleString()}</p>
+                        <p class="text-gray-800">${project.budget.toLocaleString()} ريال سعودي</p>
                     </div>
                     <div class="text-sm">
                         <span class="text-gray-600 font-medium">الجدول الزمني:</span>
