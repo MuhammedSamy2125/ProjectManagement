@@ -420,6 +420,7 @@ class WebApp {
         console.log('=== INITIALIZE DASHBOARD DEBUG ===');
         console.log('Current user:', this.currentUser);
         console.log('Current user role:', this.currentUser?.role);
+        console.log('Current page:', this.currentPage);
         
         if (!this.currentUser) {
             console.log('No current user, redirecting to login');
@@ -462,7 +463,9 @@ class WebApp {
             }
         } else if (this.currentUser.role === 'engineer') {
             console.log('Showing engineer dashboard for engineer user');
+            console.log('About to call showEngineerDashboard()');
             this.showEngineerDashboard();
+            console.log('showEngineerDashboard() completed');
         } else if (this.currentUser.role === 'admin') {
             console.log('Showing admin dashboard for admin user');
             this.showAdminDashboard();
@@ -1282,7 +1285,8 @@ class WebApp {
             
             // Show the dashboard page - this will automatically call initializeDashboard
             // which will show the appropriate role-specific dashboard
-        this.showPage('dashboard');
+            console.log('Calling showPage(dashboard) for user role:', user.role);
+            this.showPage('dashboard');
             
         } catch (error) {
             console.error('Error in loginUser:', error);
@@ -1296,7 +1300,7 @@ class WebApp {
         localStorage.removeItem('currentUser');
         this.updateAuthUI();
         this.showPage('home');
-        this.showSuccess('Logged out successfully');
+        this.showSuccess('تم تسجيل الخروج بنجاح');
     }
 
     // Check authentication status
@@ -1517,6 +1521,8 @@ class WebApp {
     showEngineerDashboard() {
         console.log('=== SHOW ENGINEER DASHBOARD ===');
         console.log('Current page:', this.currentPage);
+        console.log('Current user:', this.currentUser);
+        console.log('Current user role:', this.currentUser?.role);
         
         // Hide client dashboard first
         const clientDashboard = document.getElementById('client-dashboard');
@@ -1533,9 +1539,12 @@ class WebApp {
         }
         
         const engineerDashboard = document.getElementById('engineer-dashboard');
+        console.log('Engineer dashboard element found:', !!engineerDashboard);
         if (engineerDashboard) {
-        engineerDashboard.style.display = 'block';
+            engineerDashboard.style.display = 'block';
             console.log('Engineer dashboard displayed');
+            console.log('Engineer dashboard display style:', engineerDashboard.style.display);
+            console.log('Engineer dashboard computed display:', window.getComputedStyle(engineerDashboard).display);
         } else {
             console.error('Engineer dashboard element not found');
         }
@@ -1544,7 +1553,7 @@ class WebApp {
         const editBtn = document.getElementById('edit-profile-btn');
         if (editBtn) {
             editBtn.style.display = 'inline-flex';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Profile';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل الملف الشخصي';
         }
         
         // Hide client dashboard button for engineers
@@ -1651,36 +1660,36 @@ class WebApp {
                         project.status === 'completed' ? 'bg-gray-100 text-gray-800' : 
                         'bg-yellow-100 text-yellow-800'
                     }">
-                        ${this.capitalizeFirst(project.status || 'open')}
+                        ${this.translateStatus(project.status || 'open')}
                     </span>
                 </div>
                 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     <div class="text-sm">
-                        <span class="text-gray-600 font-medium">Building Size:</span>
-                        <p class="text-gray-800">${project.buildingSize.toLocaleString()} sq ft</p>
+                        <span class="text-gray-600 font-medium">مساحة المبنى:</span>
+                        <p class="text-gray-800">${project.buildingSize.toLocaleString()} قدم²</p>
                     </div>
                     ${project.lotSize ? `
                         <div class="text-sm">
-                            <span class="text-gray-600 font-medium">Lot Size:</span>
-                            <p class="text-gray-800">${project.lotSize.toLocaleString()} sq ft</p>
+                            <span class="text-gray-600 font-medium">مساحة الأرض:</span>
+                            <p class="text-gray-800">${project.lotSize.toLocaleString()} قدم²</p>
                         </div>
                     ` : ''}
                     <div class="text-sm">
-                        <span class="text-gray-600 font-medium">Layout:</span>
-                        <p class="text-gray-800">${project.floorsCount} floors${project.bedroomsCount ? `, ${project.bedroomsCount} bed` : ''}${project.bathroomsCount ? `, ${project.bathroomsCount} bath` : ''}</p>
+                        <span class="text-gray-600 font-medium">التخطيط:</span>
+                        <p class="text-gray-800">${project.floorsCount} طوابق${project.bedroomsCount ? `، ${project.bedroomsCount} غرفة نوم` : ''}${project.bathroomsCount ? `، ${project.bathroomsCount} حمام` : ''}</p>
                     </div>
                     <div class="text-sm">
-                        <span class="text-gray-600 font-medium">Budget:</span>
+                        <span class="text-gray-600 font-medium">الميزانية:</span>
                         <p class="text-gray-800">$${project.budget.toLocaleString()}</p>
                     </div>
                     <div class="text-sm">
-                        <span class="text-gray-600 font-medium">Timeline:</span>
+                        <span class="text-gray-600 font-medium">الجدول الزمني:</span>
                         <p class="text-gray-800">${project.timeline}</p>
                     </div>
                     ${project.startDate ? `
                         <div class="text-sm">
-                            <span class="text-gray-600 font-medium">Start Date:</span>
+                            <span class="text-gray-600 font-medium">تاريخ البداية:</span>
                             <p class="text-gray-800">${new Date(project.startDate).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
@@ -1688,7 +1697,7 @@ class WebApp {
                 
                 ${project.specialFeatures && project.specialFeatures.length > 0 ? `
                     <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <strong class="text-gray-700">Features:</strong> 
+                        <strong class="text-gray-700">المميزات:</strong> 
                         <span class="text-gray-600">${project.specialFeatures.map(f => f.replace('-', ' ')).join(', ')}</span>
                     </div>
                 ` : ''}
@@ -1701,11 +1710,11 @@ class WebApp {
                 
                 <div class="flex flex-wrap gap-2">
                     <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors text-sm" onclick="viewProject(${project.id})">
-                        <i class="fas fa-eye mr-2"></i>View Details
+                        <i class="fas fa-eye mr-2"></i>عرض التفاصيل
                     </button>
                     ${this.hasAcceptedProjectRequest(project.id) ? `
                         <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors text-sm" onclick="viewProjectStepsAsClient(${this.getProjectRequestId(project.id)})">
-                            <i class="fas fa-tasks mr-2"></i>View Steps
+                            <i class="fas fa-tasks mr-2"></i>عرض المراحل
                         </button>
                     ` : ''}
                     ${project.status === 'open' ? `
@@ -1724,6 +1733,20 @@ class WebApp {
     // Capitalize first letter
     capitalizeFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Translate status to Arabic
+    translateStatus(status) {
+        const statusTranslations = {
+            'draft': 'مسودة',
+            'open': 'مفتوح',
+            'active': 'نشط',
+            'in-progress': 'قيد التنفيذ',
+            'completed': 'مكتمل',
+            'cancelled': 'ملغي',
+            'pending': 'في الانتظار'
+        };
+        return statusTranslations[status] || this.capitalizeFirst(status);
     }
 
     // Check if project has an accepted project request
@@ -1775,7 +1798,7 @@ class WebApp {
         // Filter engineers
         console.log('Filtering users for engineers...');
         const engineers = this.data.registeredUsers.filter(user => {
-            console.log('Checking user:', user.username, 'Role:', user.role);
+            console.log('Checking user:', user.username, 'Role:', user.role, 'Photo:', user.photo);
             if (user.role !== 'engineer') {
                 console.log('Skipping non-engineer user:', user.username);
                 return false;
@@ -1793,7 +1816,7 @@ class WebApp {
                 return matches;
             }
             
-            console.log('Including engineer:', user.username);
+            console.log('Including engineer:', user.username, 'Photo status:', user.photo ? 'Has photo' : 'No photo - will use default');
             return true;
         });
 
@@ -1826,7 +1849,13 @@ class WebApp {
         }
 
         // Generate engineer cards
-        const engineerCards = engineers.map(engineer => this.createEngineerCard(engineer)).join('');
+        console.log('Generating engineer cards...');
+        const engineerCards = engineers.map(engineer => {
+            console.log('Processing engineer for card:', engineer.username);
+            return this.createEngineerCard(engineer);
+        }).join('');
+        
+        console.log('Generated cards HTML length:', engineerCards.length);
         engineersList.innerHTML = engineerCards;
         
         console.log('Engineers list updated with', engineers.length, 'engineers');
@@ -1847,8 +1876,10 @@ class WebApp {
 
     // Create engineer card for client view
     createEngineerCard(engineer) {
+        console.log('Creating engineer card for:', engineer.username);
         const skills = engineer.skills ? engineer.skills.split(',').map(s => s.trim()).slice(0, 5) : [];
         const photoHtml = this.getEngineerPhotoHtml(engineer);
+        console.log('Photo HTML generated:', photoHtml);
         
         return `
             <div class="engineer-card">
@@ -1890,19 +1921,39 @@ class WebApp {
 
     // Get engineer photo HTML for card
     getEngineerPhotoHtml(engineer) {
-        if (!engineer.photo) {
+        console.log('Getting photo HTML for engineer:', engineer.username, 'Photo:', engineer.photo);
+        
+        // Handle different photo data types
+        if (!engineer.photo || 
+            engineer.photo === '{}' || 
+            engineer.photo === '' ||
+            (typeof engineer.photo === 'object' && Object.keys(engineer.photo).length === 0)) {
+            console.log('No photo found, using default icon for:', engineer.username);
             return '<i class="fas fa-user"></i>';
         }
 
         // Try to get photo from persistent storage
         const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
-        const fileName = engineer.photo.split('/').pop();
+        
+        // Handle photo as object or string
+        let fileName;
+        if (typeof engineer.photo === 'string') {
+            fileName = engineer.photo.split('/').pop();
+        } else if (typeof engineer.photo === 'object' && engineer.photo.fileName) {
+            fileName = engineer.photo.fileName;
+        } else {
+            console.log('Invalid photo format, using default icon for:', engineer.username);
+            return '<i class="fas fa-user"></i>';
+        }
+        
         const fileInfo = persistentFiles.find(file => file.fileName === fileName);
         
         if (fileInfo && fileInfo.data) {
+            console.log('Found photo in persistent storage for:', engineer.username);
             return `<img src="${fileInfo.data}" alt="${engineer.username}">`;
         }
         
+        console.log('Photo not found in persistent storage, using default icon for:', engineer.username);
         return '<i class="fas fa-user"></i>';
     }
 
@@ -2245,7 +2296,7 @@ class WebApp {
         this.updateWorkflowStep(2, 'active');
         this.enableEngineerSelection();
         
-        this.showSuccess('Building project created successfully! You can now browse and select an engineer for your project.');
+        this.showSuccess('تم إنشاء مشروع البناء بنجاح! يمكنك الآن تصفح واختيار مهندس لمشروعك.');
     }
 
     // Create project request for engineer
@@ -2529,7 +2580,7 @@ class WebApp {
                             <div class="project-overview">
                                 <div class="project-type-badge">
                                     <span class="project-card-type">${this.escapeHtml(project.projectType.replace('-', ' '))}</span>
-                                    <span class="project-status ${project.status}">${this.capitalizeFirst(project.status)}</span>
+                                    <span class="project-status ${project.status}">${this.translateStatus(project.status)}</span>
                                 </div>
                                 
                                 <div class="project-specs">
@@ -3200,18 +3251,18 @@ class WebApp {
                     <div class="project-header">
                         <div class="project-info">
                             <div class="project-title">${this.escapeHtml(request.projectName)}</div>
-                            <div class="project-client">Client: ${this.escapeHtml(request.clientName)}</div>
-                            <div class="project-date">Accepted: ${new Date(request.createdAt).toLocaleDateString()}</div>
+                            <div class="project-client">العميل: ${this.escapeHtml(request.clientName)}</div>
+                            <div class="project-date">تم القبول: ${new Date(request.createdAt).toLocaleDateString()}</div>
                         </div>
                         <div class="project-actions">
                             <button class="btn btn-primary btn-sm" onclick="viewProjectSteps(${request.id})">
-                                <i class="fas fa-tasks"></i> Manage Steps
+                                <i class="fas fa-tasks"></i> إدارة المراحل
                             </button>
                         </div>
                     </div>
                     <div class="project-details">
-                        <strong>Project Type:</strong> ${this.escapeHtml(request.projectType)}<br>
-                        <strong>Client Message:</strong> ${this.escapeHtml(request.message)}
+                        <strong>نوع المشروع:</strong> ${this.escapeHtml(request.projectType)}<br>
+                        <strong>رسالة العميل:</strong> ${this.escapeHtml(request.message)}
                     </div>
                 </div>
             `;
@@ -3447,6 +3498,12 @@ class WebApp {
         this.currentPhase = phaseNumber;
         this.initializePhaseNavigation();
         this.loadPhaseItems();
+        
+        // Scroll to top of the modal
+        const modal = document.getElementById('project-steps-modal');
+        if (modal) {
+            modal.scrollTop = 0;
+        }
     }
     
     loadPhaseItems() {
@@ -4262,6 +4319,12 @@ class WebApp {
         this.currentClientPhase = phaseNumber;
         this.initializeClientPhaseNavigation();
         this.loadClientPhaseItems();
+        
+        // Scroll to top of the modal
+        const modal = document.getElementById('client-project-steps-modal');
+        if (modal) {
+            modal.scrollTop = 0;
+        }
     }
     
     loadClientPhaseItems() {
@@ -4345,7 +4408,7 @@ class WebApp {
                         <p class="text-sm font-medium text-green-800">تم رفع الملف بنجاح</p>
                         <p class="text-xs text-green-600">${file}</p>
                     </div>
-                    <button onclick="previewFile(this.getAttribute('data-file-path'))" 
+                    <button 
                             data-file-path="${file}"
                             class="px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 flex items-center gap-1">
                         <i class="fas fa-eye"></i> معاينة
@@ -4363,7 +4426,7 @@ class WebApp {
                         <p class="text-sm font-medium text-green-800">${this.escapeHtml(file.name)}</p>
                         <p class="text-xs text-green-600">${this.formatFileSize(file.size)}</p>
                     </div>
-                    <button onclick="previewFile(this.getAttribute('data-file-path'))" 
+                    <button 
                             data-file-path="${file.url || file.data || file.name}"
                             class="px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors duration-200 flex items-center gap-1">
                         <i class="fas fa-eye"></i> معاينة
@@ -5585,7 +5648,7 @@ class WebApp {
         const photoImg = document.getElementById('engineer-photo');
         const defaultPhoto = document.getElementById('default-photo');
 
-        if (photoPath) {
+        if (photoPath && typeof photoPath === 'string') {
             // Try to get the file from persistent storage first
             const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
             const fileName = photoPath.split('/').pop();
@@ -6186,7 +6249,7 @@ class WebApp {
         }
         
         // For engineers with photos, try to display the photo
-        if (this.currentUser.photo) {
+        if (this.currentUser.photo && typeof this.currentUser.photo === 'string') {
             // Try to get the file from persistent storage first
             const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
             const fileName = this.currentUser.photo.split('/').pop();
@@ -6241,7 +6304,7 @@ class WebApp {
         if (navDropdownRole) navDropdownRole.textContent = this.currentUser.role;
         
         // Update photo in both places
-        if (this.currentUser.photo) {
+        if (this.currentUser.photo && typeof this.currentUser.photo === 'string') {
             // Try to get the file from persistent storage first
             const persistentFiles = JSON.parse(localStorage.getItem('persistentFiles') || '[]');
             const fileName = this.currentUser.photo.split('/').pop();
@@ -7735,6 +7798,69 @@ window.exploreEngineers = function() {
     } else {
         console.error('Engineers browser section not found');
         alert('Engineers section not found. Please refresh the page.');
+    }
+};
+
+// Debug function to check engineer data
+window.debugEngineers = function() {
+    console.log('=== DEBUG ENGINEERS ===');
+    if (window.webApp) {
+        console.log('Current data:', window.webApp.data);
+        console.log('Registered users:', window.webApp.data?.registeredUsers);
+        if (window.webApp.data?.registeredUsers) {
+            const engineers = window.webApp.data.registeredUsers.filter(u => u.role === 'engineer');
+            console.log('Engineers found:', engineers);
+            engineers.forEach(eng => {
+                console.log('Engineer:', eng.username, 'Photo:', eng.photo, 'Skills:', eng.skills);
+            });
+        }
+        // Force refresh and reload
+        window.webApp.refreshDataFromStorage();
+        window.webApp.loadEngineersList();
+    }
+};
+
+// Debug function to test engineer login
+window.debugEngineerLogin = function() {
+    console.log('=== DEBUG ENGINEER LOGIN ===');
+    if (window.webApp) {
+        // Create a test engineer user
+        const testEngineer = {
+            id: 999,
+            username: "test-engineer",
+            email: "engineer@test.com",
+            role: "engineer"
+        };
+        
+        console.log('Logging in test engineer:', testEngineer);
+        window.webApp.loginUser(testEngineer);
+        
+        // Check status after a delay
+        setTimeout(() => {
+            console.log('After login - Current user:', window.webApp.currentUser);
+            console.log('After login - Current page:', window.webApp.currentPage);
+            
+            const engineerDashboard = document.getElementById('engineer-dashboard');
+            console.log('Engineer dashboard element:', !!engineerDashboard);
+            console.log('Engineer dashboard display:', engineerDashboard?.style.display);
+        }, 500);
+    }
+};
+
+// Simple function to force show engineer dashboard
+window.forceShowEngineerDashboard = function() {
+    console.log('=== FORCE SHOW ENGINEER DASHBOARD ===');
+    if (window.webApp) {
+        console.log('Current user:', window.webApp.currentUser);
+        console.log('Current page:', window.webApp.currentPage);
+        
+        // Force show dashboard page
+        window.webApp.showPage('dashboard');
+        
+        // Force show engineer dashboard
+        setTimeout(() => {
+            window.webApp.showEngineerDashboard();
+        }, 100);
     }
 };
 
